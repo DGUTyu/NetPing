@@ -1,0 +1,126 @@
+import java.text.SimpleDateFormat
+import java.util.logging.SimpleFormatter
+
+plugins {
+    id 'com.android.application'
+}
+
+def setting = rootProject.ext.setting
+
+def getApkName() {
+    def apkName = setting.APK_NAME.replace("\"", "")
+    apkName = apkName.split("_")[0]
+    return apkName
+}
+
+static def buildTime() {
+    def date = new Date()
+    def formattedDate = date.format("yyyy-MM-dd-hh-mm")
+    return formattedDate
+}
+
+android {
+
+    buildFeatures {
+        viewBinding = true
+    }
+
+    compileSdkVersion rootProject.ext.android["compileSdkVersion"]
+    buildToolsVersion rootProject.ext.android["buildToolsVersion"]
+
+    defaultConfig {
+        applicationId rootProject.ext.android["applicationId"]
+        minSdkVersion rootProject.ext.android["minSdkVersion"]
+        targetSdkVersion rootProject.ext.android["targetSdkVersion"]
+        versionCode rootProject.ext.android["versionCode"]
+        versionName rootProject.ext.android["versionName"]
+        // ImageViewPro默认颜色
+        buildConfigField("int", "THEME_COLOR", "R.color.theme_color")
+        buildConfigField("int", "IMG_PRO_COLOR", "R.color.img_theme")
+        buildConfigField("int", "SWITCH_ON_COLOR", "R.color.switch_on_theme")
+        buildConfigField("int", "SWITCH_OFF_COLOR", "R.color.switch_off_theme")
+        // All flavors must now belong to a named flavor dimension.
+        // Android Studio 3.0 之后 多渠道需要配置方向
+        flavorDimensions "default"
+
+        //testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            //"armeabi", "x86","x86_64"
+            //设置支持的SO库架构（开发者可以根据需要，选择一个或多个平台的so）
+            //目前主流版本（Google Play上架要求app必须适配arm64-v8a）
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
+    }
+
+    //签名设置
+    def alias = "commonui"
+    def keyPW = "android"
+    def filePath = "../app/src/main/jks/commonui.jks"
+    def storePW = "wxdgut.com"
+    signingConfigs {
+        debug {
+            keyAlias 'commonui'
+            keyPassword 'android'
+            storeFile file('/src/main/jks/commonui.jks')
+            storePassword 'wxdgut.com'
+        }
+        release {
+            keyAlias alias
+            keyPassword keyPW
+            storeFile file(filePath)
+            storePassword(storePW)
+            v2SigningEnabled false
+        }
+    }
+
+    //打包配置
+    buildTypes {
+        debug {
+            //自定义Gradle常量
+            buildConfigField "boolean", "LOG_DEBUG", "true"
+            buildConfigField "String", "LOG_TAG", "\"CommonUI\""
+            buildConfigField "String", "SP_NAME", "\"CommonUI\""
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            //签名
+            signingConfig signingConfigs.debug
+            //其他设置
+            setting.each { k, v ->
+                buildConfigField("String", k, v)
+            }
+        }
+        release {
+            buildConfigField "boolean", "LOG_DEBUG", "false"
+            buildConfigField "String", "LOG_TAG", "\"CommonUI\""
+            buildConfigField "String", "SP_NAME", "\"CommonUI\""
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            //签名
+            signingConfig signingConfigs.release
+            //其他设置
+            setting.each { k, v ->
+                buildConfigField("String", k, v)
+            }
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    //自动追加版本号和版本名称
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            // 包名_版本号.apk
+            outputFileName = "${getApkName()}_${buildType.name}_v${defaultConfig.versionName}_${buildTime()}.apk";
+        }
+    }
+}
+
+dependencies {
+    //
+    implementation fileTree(dir: 'libs', includes: ['*.jar'])
+    //添加Framework依赖 单引号
+    implementation project(path: ':net')
+}

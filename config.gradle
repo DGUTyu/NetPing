@@ -1,0 +1,31 @@
+ext {
+    //Android 配置，定义一个数组，使用逗号分离
+    android = [
+            compileSdkVersion: 30,
+            buildToolsVersion: "30.0.2",
+            applicationId    : "com.example.netping",
+            minSdkVersion    : 19,
+            targetSdkVersion : 28,
+            versionCode      : 1,
+            versionName      : "1.0"
+    ]
+    dependencies = [
+            //"appcompat"       : 'androidx.appcompat:appcompat:1.3.0-alpha02',
+            //"material"        : 'com.google.android.material:material:1.1.0',
+            //"constraintlayout": 'androidx.constraintlayout:constraintlayout:1.1.3',
+            "appcompat" : 'com.android.support:appcompat-v7:28.0.0',
+            "design"    : 'com.android.support:design:28.0.0',
+            "constraintlayout": 'com.android.support.constraint:constraint-layout:1.0.2',
+            "cardview"  : 'com.android.support:cardview-v7:28.0.0',
+            "picasso"   : 'com.squareup.picasso:picasso:2.5.2'
+    ]
+    //依赖 配置 定义一个数组
+    maven = [
+            "jitpack": "https://www.jitpack.io",
+    ]
+    //其他设置
+    setting = [
+            APK_NAME: "\"netping\"",
+            BASE_URI: "\"http://www.wxdgut.com/\"",
+    ]
+}

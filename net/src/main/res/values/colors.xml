@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <!--主题色-->
+    <color name="theme_color">#3491FA</color>
+    <color name="theme_img">#7BC0FC</color>
+    <color name="theme_switch_on">#FF7BE188</color>
+    <color name="theme_switch_off">#FF86909C</color>
+    <color name="theme_btn_bg">#57A9FB</color>
+    <color name="theme_btn_bg_press">#3491FA</color>
+    <color name="theme_btn_tv">#000000</color>
+    <color name="theme_btn_tv_press">#000000</color>
+    <!--颜色值-->
+    <color name="transparent">#00000000</color>
+    <color name="red">#ff0000</color>
+    <color name="green">#00ff00</color>
+    <color name="blue">#0000ff</color>
+    <color name="main_color">#2196F3</color>
+    <color name="dark">#d4d4d4</color>
+</resources>

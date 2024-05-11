@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    compileSdkVersion rootProject.ext.android["compileSdkVersion"]
+    buildToolsVersion rootProject.ext.android["buildToolsVersion"]
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.android["minSdkVersion"]
+        targetSdkVersion rootProject.ext.android["targetSdkVersion"]
+        versionCode rootProject.ext.android["versionCode"]
+        versionName rootProject.ext.android["versionName"]
+
+        //testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        debug {
+            //自定义Gradle常量
+            buildConfigField "boolean", "LOG_DEBUG", "true"
+            buildConfigField "String", "LOG_TAG", "\"NetPing\""
+            buildConfigField "String", "SP_NAME", "\"NetPing\""
+        }
+        release {
+            buildConfigField "boolean", "LOG_DEBUG", "false"
+            buildConfigField "String", "LOG_TAG", "\"NetPing\""
+            buildConfigField "String", "SP_NAME", "\"NetPing\""
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    //
+    implementation fileTree(dir: 'libs', includes: ['*.jar'])
+    //v7
+    api rootProject.ext.dependencies["appcompat"]
+    //
+    api rootProject.ext.dependencies["design"]
+    api rootProject.ext.dependencies["constraintlayout"]
+    api rootProject.ext.dependencies["picasso"]
+}
