@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/color_fra_shadow"
+    android:orientation="vertical">
+
+
+    <TextView
+        android:id="@+id/id_tv_domain"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="20dp"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="域名: http://spayoverseas61-k8s-test.wallyt.net" />
+
+
+    <TextView
+        android:id="@+id/id_tv_dns"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="15dp"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@+id/id_tv_domain"
+        tools:text="DNS解析:\nhttp://spayoverseas61-k8s-test.wallyt.net\n192.168.3.218" />
+
+
+    <TextView
+        android:id="@+id/id_tv_ping"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="@color/black"
+        android:padding="10dp"
+        android:scrollbars="vertical"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        tools:text="ping结果展示" />
+
+
+</LinearLayout>

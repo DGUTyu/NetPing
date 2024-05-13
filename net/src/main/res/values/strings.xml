@@ -1,3 +1,30 @@
 <resources>
     <string name="libName">NetPing</string>
+    <string name="string_sent_packets">发送包</string>
+    <string name="string_received_packets">接收包</string>
+    <string name="string_packets_loss_rate">丢包率</string>
+    <string name="string_minimum_rtt">最小RTT</string>
+    <string name="string_maximum_rtt">最大RTT</string>
+    <string name="string_average_rtt">平均RTT</string>
+    <string name="string_one_minute">网络诊断中，预计最多需要一分钟</string>
+    <string name="net_test">网络测试</string>
+    <string name="string_domain">域名</string>
+    <string name="string_dns_resolution">DNS解析</string>
+    <string name="string_network_diagnosis">网络检测</string>
+    <string name="string_dns_resolving">解析中</string>
+    <string name="string_network_status">网络状态</string>
+    <string name="string_available">可用</string>
+    <string name="string_unavailable">不可用</string>
+    <string name="string_network_type">网络类型</string>
+    <string name="string_proxy_status">代理状态</string>
+    <string name="string_not_enable">未开启</string>
+    <string name="string_connected">已连接</string>
+    <string name="string_vpn_status">VPN状态</string>
+    <string name="string_device_brand">设备品牌</string>
+    <string name="string_device_model">设备型号</string>
+    <string name="string_device_system">设备系统</string>
+    <string name="string_rom_system_type">ROM系统类型</string>
+    <string name="string_rom_system_version">ROM系统版本</string>
+    <string name="string_current_time">当前时间</string>
+    <string name="string_app_version">App版本号</string>
 </resources>
