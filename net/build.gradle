@@ -49,16 +49,16 @@ dependencies {
     //
     implementation fileTree(dir: 'libs', includes: ['*.jar'])
     //v7
-    api rootProject.ext.dependencies["appcompat"]
+    implementation rootProject.ext.dependencies["appcompat"]
     //
-    api rootProject.ext.dependencies["constraintlayout"]
-    api rootProject.ext.dependencies["recyclerview"]
-    api rootProject.ext.dependencies["cardview"]
-    api rootProject.ext.dependencies["kotlin-stdlib-jdk7"]
-    api rootProject.ext.dependencies["kotlinx-coroutines-core"]
-    api rootProject.ext.dependencies["kotlinx-coroutines-android"]
-    api rootProject.ext.dependencies["lifecycle-runtime-ktx"]
-    api rootProject.ext.dependencies["core-ktx"]
-    api rootProject.ext.dependencies["BaseRecyclerViewAdapterHelper"]
-    api rootProject.ext.dependencies["gson"]
+    implementation rootProject.ext.dependencies["constraintlayout"]
+    implementation rootProject.ext.dependencies["recyclerview"]
+    implementation rootProject.ext.dependencies["cardview"]
+    implementation rootProject.ext.dependencies["kotlin-stdlib-jdk7"]
+    implementation rootProject.ext.dependencies["kotlinx-coroutines-core"]
+    implementation rootProject.ext.dependencies["kotlinx-coroutines-android"]
+    implementation rootProject.ext.dependencies["lifecycle-runtime-ktx"]
+    implementation rootProject.ext.dependencies["core-ktx"]
+    implementation rootProject.ext.dependencies["BaseRecyclerViewAdapterHelper"]
+    implementation rootProject.ext.dependencies["gson"]
 }

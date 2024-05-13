@@ -8,8 +8,8 @@ ext {
             compileSdkVersion: 30,
             buildToolsVersion: "30.0.2",
             applicationId    : "com.example.netping",
-            minSdkVersion    : 19,
-            targetSdkVersion : 28,
+            minSdkVersion    : 16,
+            targetSdkVersion : 30,
             versionCode      : 1,
             versionName      : "1.0"
     ]
@@ -40,6 +40,6 @@ ext {
     setting = [
             APK_NAME: "\"netping\"",
             BASE_URL: "\"https://www.baidu.com/\"",
-            VERSION_NAME: "\"ping_2.0\""
+            VERSION_NAME: "\"ping_0.3\""
     ]
 }
