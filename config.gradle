@@ -39,6 +39,7 @@ ext {
     //其他设置
     setting = [
             APK_NAME: "\"netping\"",
-            BASE_URL: "\"http://www.baidu.com/\"",
+            BASE_URL: "\"https://www.baidu.com/\"",
+            VERSION_NAME: "\"ping_2.0\""
     ]
 }

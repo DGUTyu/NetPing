@@ -6,6 +6,7 @@ import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.net.activity.NetworkDiagnosisActivity;
 import com.example.netping.R;
 
 public class MainActivity extends AppCompatActivity {
@@ -18,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         pingBtn = findViewById(R.id.btn);
         pingBtn.setOnClickListener(v -> {
-            NetworkDiagnosisActivity.Companion.startNetworkDiagnosisActivity(MainActivity.this, "http://www.baidu.com");
+            NetworkDiagnosisActivity.Companion.startNetworkDiagnosisActivity(MainActivity.this);
         });
     }
 }

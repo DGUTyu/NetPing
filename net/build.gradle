@@ -22,6 +22,10 @@ android {
             buildConfigField "boolean", "LOG_DEBUG", "true"
             buildConfigField "String", "LOG_TAG", "\"NetPing\""
             buildConfigField "String", "SP_NAME", "\"NetPing\""
+            //其他设置
+            setting.each { k, v ->
+                buildConfigField("String", k, v)
+            }
         }
         release {
             buildConfigField "boolean", "LOG_DEBUG", "false"
@@ -29,6 +33,10 @@ android {
             buildConfigField "String", "SP_NAME", "\"NetPing\""
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            //其他设置
+            setting.each { k, v ->
+                buildConfigField("String", k, v)
+            }
         }
     }
     compileOptions {
