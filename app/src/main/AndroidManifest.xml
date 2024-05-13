@@ -7,7 +7,7 @@
 
     <application
         android:name="com.example.aos.app.MyApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -21,8 +21,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.example.aos.activity.PingActivity" />
-        <activity android:name="com.example.aos.activity.NetworkDiagnosisActivity" />
+        <activity
+            android:name="com.example.aos.activity.PingActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.example.aos.activity.NetworkDiagnosisActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>
