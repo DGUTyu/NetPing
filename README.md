@@ -1,5 +1,5 @@
 # NetPing
-# 网络自检 1.0正式版
+# 网络自检 2.0正式版（兼容旧android项目）
 # 使用教程：
 ## 1.Add it in your root build.gradle at the end of repositories:
 ```groovy
@@ -21,4 +21,22 @@ dependencies {
 ```java
 NetworkDiagnosisActivity.Companion.startNetworkDiagnosisActivity(LoginActivity.this);
 NetworkDiagnosisActivity.Companion.startNetworkDiagnosisActivity(LoginActivity.this, "https://www.baidu.com/");
+```
+## 4.Custom NetPing default domain name (Optional)
+```java
+public class MyApplication extends Application {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        //自定义NetPing默认域名
+        NetConfigUtils.init(new NetConfig() {
+            @Override
+            public String getDefaultPingUrl() {
+                //return super.getDefaultPingUrl();
+                //return "https://www.baidu.com";
+                return BuildConfig.H5_BASE_URL;
+            }
+        });
+    }
+}
 ```

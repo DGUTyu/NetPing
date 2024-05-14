@@ -11,6 +11,7 @@ import android.text.TextUtils
 import com.example.net.BuildConfig
 import com.example.net.R
 import com.example.net.adapter.NetworkDiagnosisAdapter
+import com.example.net.config.NetConfigUtils
 import com.example.net.entity.NetworkDiagnosisEntity
 import com.example.net.entity.PingEntity
 import com.example.net.interfaces.OnNetworkDiagnosisItemClickListener
@@ -43,7 +44,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
     private lateinit var mAdapter: NetworkDiagnosisAdapter
     private val mList = ArrayList<NetworkDiagnosisEntity>()
 
-    private var DOMAIN: String = BuildConfig.BASE_URL
+    private var DOMAIN: String = NetConfigUtils.getDefaultPingUrl()
 
 
     private val mSeqList = ArrayList<Int>()
@@ -69,17 +70,18 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
         const val REFRESH = "refresh"
         const val INTENT_FLAG = "URL"
+        val config = NetConfigUtils.getDefaultPingUrl()
 
         fun startNetworkDiagnosisActivity(fromActivity: Activity?) {
-            startNetworkDiagnosisActivity(fromActivity, BuildConfig.BASE_URL)
+            startNetworkDiagnosisActivity(fromActivity, config)
         }
 
 
         fun startNetworkDiagnosisActivity(fromActivity: Activity?, url: String?) {
             fromActivity?.run {
                 val intent = Intent(this, NetworkDiagnosisActivity::class.java).apply {
-                    // 使用传递的 URL，如果为空，则使用默认的 BASE_URL
-                    putExtra(INTENT_FLAG, if (url.isNullOrEmpty() || url == "null") BuildConfig.BASE_URL else url)
+                    // 使用传递的 URL，如果为空，则使用默认的域名
+                    putExtra(INTENT_FLAG, if (url.isNullOrEmpty() || url == "null") config else url)
                 }
                 startActivity(intent)
             }
@@ -91,7 +93,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(getLayoutId())
         // Retrieve URL from intent extras
-        val url = intent.getStringExtra(INTENT_FLAG) ?: BuildConfig.BASE_URL
+        val url = intent.getStringExtra(INTENT_FLAG) ?: DOMAIN
         // Assign URL to DOMAIN variable
         DOMAIN = url
         initView()
