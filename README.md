@@ -1,5 +1,5 @@
 # NetPing
-# 网络自检 2.0正式版（兼容旧android项目）
+# 网络自检 2.1测试版（兼容support:appcompat-v7:27）
 # 使用教程：
 ## 1.Add it in your root build.gradle at the end of repositories:
 ```groovy
@@ -14,7 +14,7 @@ dependencyResolutionManagement {
 ## 2.Add the dependency
 ```groovy
 dependencies {
-    implementation 'com.github.DGUTyu:NetPing:1.0'
+    implementation 'com.github.DGUTyu:NetPing:2.1'
 }
 ```
 ## 3.Use Demo
