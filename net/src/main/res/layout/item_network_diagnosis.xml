@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/transparent">
 
-    <androidx.cardview.widget.CardView
+    <android.support.v7.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="20dp"
@@ -17,7 +17,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginVertical="10dp">
@@ -46,7 +46,8 @@
                 app:layout_constraintBottom_toBottomOf="@+id/id_tv_title"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/id_tv_title"
-                app:layout_constraintTop_toTopOf="@+id/id_tv_title" />
+                app:layout_constraintTop_toTopOf="@+id/id_tv_title"
+                android:layout_marginRight="10dp" />
 
 
             <View
@@ -71,10 +72,10 @@
                 tools:text="    DNS解析\n    http://spayoverseas61-k8s-test.wallyt.net\n    192.168.3.218" />
 
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        </android.support.constraint.ConstraintLayout>
 
 
-    </androidx.cardview.widget.CardView>
+    </android.support.v7.widget.CardView>
 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</android.support.constraint.ConstraintLayout>

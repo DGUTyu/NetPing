@@ -2,9 +2,9 @@ package com.example.aos.activity;
 
 
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.Button;
 
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.net.activity.NetworkDiagnosisActivity;
 import com.example.netping.R;

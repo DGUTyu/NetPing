@@ -3,10 +3,10 @@ package com.example.net.activity
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import android.text.TextUtils
 import android.text.method.ScrollingMovementMethod
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import com.example.net.R
 import com.example.net.entity.PingEntity
 import com.example.net.util.KotlinUtils
