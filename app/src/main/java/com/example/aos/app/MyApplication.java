@@ -25,34 +25,22 @@ public class MyApplication extends Application {
             }
 
             @Override
-            public String getAppInstallTime() {
-                return CommonUtils.getAppInstallTime(context);
-            }
-
-            @Override
-            public String getAppUpdateTime() {
-                return CommonUtils.getAppUpdateTime(context);
-            }
-
-            @Override
             public String getAppVersion() {
                 return BuildConfig.VERSION_NAME;
             }
 
             @Override
-            public String getAppMd5() {
-                return CommonUtils.getAppMD5(context);
+            public String[] getAppTimeInfo() {
+                //你可以使用自定义方法，也可以使用我提供的方法，如下
+                return CommonUtils.getAppTimeInfo(context);
             }
 
             @Override
-            public String getAppSHA1() {
-                return CommonUtils.getAppSHA1(context);
+            public String[] getAppDigest() {
+                //你可以使用自定义方法，也可以使用我提供的方法，如下
+                return CommonUtils.getAppDigest(context);
             }
 
-            @Override
-            public String getAppSHA256() {
-                return CommonUtils.getAppSHA256(context);
-            }
         });
     }
 }

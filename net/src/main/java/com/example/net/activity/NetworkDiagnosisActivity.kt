@@ -452,12 +452,14 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
 
     private fun strDevice(): String {
-        val appInstallTimeString = getConfigInfoString(NetConfigUtils.getAppInstallTime(), R.string.string_app_install_time)
-        val appUpdateTimeString = getConfigInfoString(NetConfigUtils.getAppUpdateTime(), R.string.string_app_recent_update_time)
+        val appTimeInfo = NetConfigUtils.getAppTimeInfo()
+        val appDigest = NetConfigUtils.getAppDigest()
+        val appInstallTimeString = getConfigInfoString(appTimeInfo[0], R.string.string_app_install_time)
+        val appUpdateTimeString = getConfigInfoString(appTimeInfo[1], R.string.string_app_recent_update_time)
         val versionString = getConfigInfoString(NetConfigUtils.getAppVersion(), R.string.string_app_version)
-        val appMD5String = getConfigInfoString(NetConfigUtils.getAppMd5(), "AppMD5")
-        val appSHA1String = getConfigInfoString(NetConfigUtils.getAppSHA1(), "SHA1")
-        val appSHA256String = getConfigInfoString(NetConfigUtils.getAppSHA256(), "SHA256")
+        val appMD5String = getConfigInfoString(appDigest[0], "AppMD5")
+        val appSHA1String = getConfigInfoString(appDigest[1], "SHA1")
+        val appSHA256String = getConfigInfoString(appDigest[2], "SHA256")
 
 
         return "${getString(R.string.string_device_brand)}: ${Build.BRAND}\n" +

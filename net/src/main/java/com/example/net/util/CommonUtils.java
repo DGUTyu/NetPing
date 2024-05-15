@@ -60,39 +60,27 @@ public class CommonUtils {
     }
 
     /**
-     * 获取应用的安装时间
+     * 获取应用的安装时间和最近更新时间
      *
      * @param context 应用的 Context
-     * @return 应用的安装时间（字符串格式：yyyy-MM-dd HH:mm:ss）
+     * @return 包含应用的安装时间和最近更新时间的字符串数组，
+     *         第一个元素是安装时间，第二个元素是更新时间，
+     *         如果获取失败，则返回空字符串
      */
-    public static String getAppInstallTime(Context context) {
+    public static String[] getAppTimeInfo(Context context) {
         PackageManager pm = context.getPackageManager();
+        String[] timeInfo = new String[2];
         try {
             PackageInfo packageInfo = pm.getPackageInfo(context.getPackageName(), 0);
             long installTimeMillis = packageInfo.firstInstallTime;
-            return formatDate(installTimeMillis);
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    /**
-     * 获取应用的最近更新时间
-     *
-     * @param context 应用的 Context
-     * @return 应用的最近更新时间（字符串格式：yyyy-MM-dd HH:mm:ss）
-     */
-    public static String getAppUpdateTime(Context context) {
-        PackageManager pm = context.getPackageManager();
-        try {
-            PackageInfo packageInfo = pm.getPackageInfo(context.getPackageName(), 0);
             long updateTimeMillis = packageInfo.lastUpdateTime;
-            return formatDate(updateTimeMillis);
+            // 格式化安装时间和更新时间，并放入数组中
+            timeInfo[0] = formatDate(installTimeMillis);
+            timeInfo[1] = formatDate(updateTimeMillis);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        return "";
+        return timeInfo;
     }
 
     /**
@@ -107,82 +95,46 @@ public class CommonUtils {
     }
 
     /**
-     * 获取APP自身的 MD5
-     *
-     * @param context
-     * @return
-     */
-    public static String getAppMD5(Context context) {
-        String apkFilePath = context.getPackageCodePath();
-        File apkFile = new File(apkFilePath);
-        return getFileMD5(apkFile);
-    }
-
-    /**
-     * 获取文件的 MD5
-     *
-     * @param file
-     * @return
-     */
-    private static String getFileMD5(File file) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            FileInputStream fis = new FileInputStream(file);
-
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = fis.read(buffer)) != -1) {
-                md.update(buffer, 0, read);
-            }
-            byte[] digest = md.digest();
-
-            StringBuilder sb = new StringBuilder();
-            for (byte b : digest) {
-                sb.append(String.format("%02x", b & 0xff));
-            }
-
-            fis.close();
-
-            return sb.toString();
-        } catch (NoSuchAlgorithmException | IOException e) {
-            e.printStackTrace();
-        }
-        return "";
-
-    }
-
-    /**
-     * 获取应用自身 APK 文件的 SHA-1 值
+     * 获取应用 APK 文件的 MD5、SHA-1 和 SHA-256 消息摘要
      *
      * @param context 应用的 Context
-     * @return 应用自身 APK 文件的 SHA-1 值
+     * @return 包含应用 APK 文件的 MD5、SHA-1 和 SHA-256 消息摘要的字符串数组，
+     *         分别对应数组的第 0、1、2 个元素，
+     *         如果获取失败，则对应元素为 ""
      */
-    public static String getAppSHA1(Context context) {
+    public static String[] getAppDigest(Context context) {
+        // 获取应用 APK 文件的路径
         String apkFilePath = context.getPackageCodePath();
         File apkFile = new File(apkFilePath);
-        return getFileSHA(apkFile, "SHA-1");
+
+        // 调用 getFileDigest 方法获取文件的 MD5、SHA-1 和 SHA-256 摘要
+        return getFileDigest(apkFile);
     }
 
     /**
-     * 获取应用自身 APK 文件的 SHA-256 值
+     * 获取文件的 MD5、SHA-1 和 SHA-256 消息摘要
      *
-     * @param context 应用的 Context
-     * @return 应用自身 APK 文件的 SHA-256 值
+     * @param file 要计算消息摘要的文件
+     * @return 包含 MD5、SHA-1 和 SHA-256 消息摘要的字符串数组，
+     *         分别对应数组的第 0、1、2 个元素，
+     *         如果获取失败，则对应元素为 ""
      */
-    public static String getAppSHA256(Context context) {
-        String apkFilePath = context.getPackageCodePath();
-        File apkFile = new File(apkFilePath);
-        return getFileSHA(apkFile, "SHA-256");
+    public static String[] getFileDigest(File file) {
+        String[] digests = new String[3];
+        digests[0] = getFileDigest(file, "MD5");
+        digests[1] = getFileDigest(file, "SHA-1");
+        digests[2] = getFileDigest(file, "SHA-256");
+        return digests;
     }
 
     /**
-     * 获取文件的 SHA 值
+     * 获取文件的消息摘要
      *
-     * @param file      要计算 SHA 值的文件
-     * @param algorithm SHA 算法（"SHA-1" 或 "SHA-256"）
-     * @return 文件的 SHA 值
+     * @param file      要计算摘要的文件
+     * @param algorithm 摘要算法（"MD5"、"SHA-1" 或 "SHA-256"）
+     * @return 文件的消息摘要
      */
-    private static String getFileSHA(File file, String algorithm) {
+    private static String getFileDigest(File file, String algorithm) {
         try {
             MessageDigest md = MessageDigest.getInstance(algorithm);
             FileInputStream fis = new FileInputStream(file);

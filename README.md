@@ -1,6 +1,6 @@
-# NetPing
-# 网络自检 2.1测试版（兼容support:appcompat-v7:27）
-# 使用教程：
+# NetPing 网络自检
+# Network self-check 2.2 (compatible with support:appcompat-v7:27)
+# Tutorial for use
 ## 1.Add it in your root build.gradle at the end of repositories:
 ```groovy
 dependencyResolutionManagement {
@@ -14,7 +14,7 @@ dependencyResolutionManagement {
 ## 2.Add the dependency
 ```groovy
 dependencies {
-    implementation 'com.github.DGUTyu:NetPing:2.1'
+    implementation 'com.github.DGUTyu:NetPing:2.2'
 }
 ```
 ## 3.Use Demo
@@ -28,7 +28,7 @@ public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        //自定义NetPing默认域名
+        //Customize the default domain for NetPing.
         NetConfigUtils.init(new NetConfig() {
             @Override
             public String getDefaultPingUrl() {
@@ -39,4 +39,27 @@ public class MyApplication extends Application {
         });
     }
 }
+```
+If the application information is passed, it will be displayed on the Device.
+```java
+    NetConfigUtils.init(new NetConfig() {
+
+        @Override
+        public String getAppVersion() {
+            return BuildConfig.VERSION_NAME;
+        }
+
+        @Override
+        public String[] getAppTimeInfo() {
+            //You can use custom methods or use the methods I provide, as follows.
+            return CommonUtils.getAppTimeInfo(context);
+        }
+
+        @Override
+        public String[] getAppDigest() {
+            //You can use custom methods or use the methods I provide, as follows.
+            return CommonUtils.getAppDigest(context);
+        }
+
+    });
 ```

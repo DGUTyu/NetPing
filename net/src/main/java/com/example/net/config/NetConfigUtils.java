@@ -50,27 +50,27 @@ public class NetConfigUtils {
     }
 
     /**
-     * 获取接入方 APP 的安装时间
+     * 获取接入方 APP 的安装时间和最近更新时间
      *
      * @return
      */
-    public static String getAppInstallTime() {
+    public static String[] getAppTimeInfo() {
         if (!isInitialized()) {
-            return NetConfig.NOT_SET;
+            return new String[]{NetConfig.NOT_SET, NetConfig.NOT_SET};
         }
-        return netConfig.getAppInstallTime();
+        return netConfig.getAppTimeInfo();
     }
 
     /**
-     * 获取接入方 APP 的最近更新时间
+     * 获取接入方 APP 的 MD5、SHA-1 和 SHA-256
      *
      * @return
      */
-    public static String getAppUpdateTime() {
+    public static String[] getAppDigest() {
         if (!isInitialized()) {
-            return NetConfig.NOT_SET;
+            return new String[]{NetConfig.NOT_SET, NetConfig.NOT_SET, NetConfig.NOT_SET};
         }
-        return netConfig.getAppUpdateTime();
+        return netConfig.getAppDigest();
     }
 
     /**
@@ -83,41 +83,5 @@ public class NetConfigUtils {
             return NetConfig.NOT_SET;
         }
         return netConfig.getAppVersion();
-    }
-
-    /**
-     * 获取接入方 APP 的 MD5
-     *
-     * @return
-     */
-    public static String getAppMd5() {
-        if (!isInitialized()) {
-            return NetConfig.NOT_SET;
-        }
-        return netConfig.getAppMd5();
-    }
-
-    /**
-     * 获取接入方 APP 的 SHA1
-     *
-     * @return
-     */
-    public static String getAppSHA1() {
-        if (!isInitialized()) {
-            return NetConfig.NOT_SET;
-        }
-        return netConfig.getAppSHA1();
-    }
-
-    /**
-     * 获取接入方 APP 的 SHA256
-     *
-     * @return
-     */
-    public static String getAppSHA256() {
-        if (!isInitialized()) {
-            return NetConfig.NOT_SET;
-        }
-        return netConfig.getAppSHA256();
     }
 }
