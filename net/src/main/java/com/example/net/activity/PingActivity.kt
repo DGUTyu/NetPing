@@ -78,6 +78,8 @@ class PingActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 隐藏原生标题栏
+        supportActionBar?.hide()
         setContentView(getLayoutId())
         // 如果需要添加自定义的 titleBarLayout，则加载它
         val customTitleBarLayoutId = NetConfigUtils.getTitleBarLayoutId()
