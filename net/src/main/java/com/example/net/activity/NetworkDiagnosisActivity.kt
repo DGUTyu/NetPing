@@ -1,6 +1,7 @@
 package com.example.net.activity
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -12,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.Toast
 import com.example.net.R
 import com.example.net.adapter.NetworkDiagnosisAdapter
 import com.example.net.config.NetConfig
@@ -40,7 +42,8 @@ import kotlin.coroutines.suspendCoroutine
  * @description 体验一下协程的魅力
  */
 class NetworkDiagnosisActivity : AppCompatActivity() {
-
+    private var context: Context? = null
+    private var deviceInfo: String = ""
     private fun getLayoutId() = R.layout.act_network_diagnosis
 
 
@@ -95,6 +98,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        context = this
         // 隐藏原生标题栏
         supportActionBar?.hide()
         setContentView(getLayoutId())
@@ -147,6 +151,9 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
             override fun onItemClick(position: Int) {
                 if (position == POSITION_PING) {
                     PingActivity.startPingActivity(this@NetworkDiagnosisActivity, DOMAIN, mIp)
+                } else if (position == POSITION_DEVICE) {
+                    Toast.makeText(context, getString(R.string.string_copied), Toast.LENGTH_SHORT).show()
+                    CommonUtils.copy(deviceInfo, context)
                 }
             }
         })
@@ -352,7 +359,8 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
         mList.add(NetworkDiagnosisEntity("Net", strNet()))
 
-        mList.add(NetworkDiagnosisEntity("Device", strDevice()))
+        deviceInfo = strDevice()
+        mList.add(NetworkDiagnosisEntity("Device", deviceInfo))
 
 
         mList.add(NetworkDiagnosisEntity("Ping", mPingData.display(), true))

@@ -1,5 +1,7 @@
 package com.example.net.util;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -158,6 +160,18 @@ public class CommonUtils {
             e.printStackTrace();
         }
         return "";
+    }
+
+    /**
+     * 复制文本
+     *
+     * @param text    待复制的文本
+     * @param context 上下文
+     */
+    public static void copy(String text, Context context) {
+        ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData mClipData = ClipData.newPlainText(null, text);
+        cm.setPrimaryClip(mClipData);
     }
 
 }
