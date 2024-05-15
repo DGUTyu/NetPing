@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/color_fra_shadow"
@@ -17,7 +18,7 @@
         android:textColor="@color/black"
         android:textSize="14sp"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="域名: http://spayoverseas61-k8s-test.wallyt.net" />
+        tools:text="域名: https://www.baidu.com" />
 
 
     <TextView
@@ -29,7 +30,7 @@
         android:textColor="@color/black"
         android:textSize="14sp"
         app:layout_constraintTop_toBottomOf="@+id/id_tv_domain"
-        tools:text="DNS解析:\nhttp://spayoverseas61-k8s-test.wallyt.net\n192.168.3.218" />
+        tools:text="DNS解析:\nhttps://www.baidu.com\n192.168.3.218" />
 
 
     <TextView

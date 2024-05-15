@@ -6,8 +6,14 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.text.TextUtils
 import android.text.method.ScrollingMovementMethod
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import com.example.net.R
+import com.example.net.config.NetConfig
+import com.example.net.config.NetConfigUtils
 import com.example.net.entity.PingEntity
 import com.example.net.util.KotlinUtils
 import java.io.BufferedReader
@@ -73,12 +79,30 @@ class PingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(getLayoutId())
+        // 如果需要添加自定义的 titleBarLayout，则加载它
+        val customTitleBarLayoutId = NetConfigUtils.getTitleBarLayoutId()
+        if (customTitleBarLayoutId != NetConfig.NOT_LAYOUT_ID) {
+            val customTitleBarLayout = LayoutInflater.from(this).inflate(customTitleBarLayoutId, null)
+            // 将自定义的 titleBarLayout 添加到布局中
+            val rootView = findViewById<LinearLayout>(R.id.root_layout)
+            val layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            // 添加在第一个位置
+            rootView.addView(customTitleBarLayout, 0, layoutParams)
+            initListener(customTitleBarLayout)
+        }
         intent?.run {
             getStringExtra(DATA_DOMAIN)?.let(::setDomain)
             getStringExtra(DATA_IP)?.let(::setIp)
         }
         if (!TextUtils.isEmpty(mDomain)) {
             initView()
+        }
+    }
+
+    private fun initListener(customTitleBarLayout: View?) {
+        customTitleBarLayout?.setOnClickListener {
+            // 处理点击事件，finish当前页面
+            finish()
         }
     }
 

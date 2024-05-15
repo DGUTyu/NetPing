@@ -33,7 +33,7 @@
                 app:layout_constraintEnd_toStartOf="@+id/id_img_arrow"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                tools:text="http://spayoverseas61-k8s-test.wallyt.net" />
+                tools:text="https://www.baidu.com" />
 
 
             <ImageView
@@ -69,7 +69,7 @@
                 android:textSize="13sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/id_view_line"
-                tools:text="    DNS解析\n    http://spayoverseas61-k8s-test.wallyt.net\n    192.168.3.218" />
+                tools:text="    DNS解析\n    https://www.baidu.com\n    192.168.3.218" />
 
 
         </android.support.constraint.ConstraintLayout>

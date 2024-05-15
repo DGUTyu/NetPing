@@ -1,6 +1,7 @@
 package com.example.net.config;
 
 import com.example.net.BuildConfig;
+import com.example.net.R;
 
 public class NetConfigUtils {
     private static NetConfig netConfig;
@@ -83,5 +84,17 @@ public class NetConfigUtils {
             return NetConfig.NOT_SET;
         }
         return netConfig.getAppVersion();
+    }
+
+    /**
+     * 获取顶部titleBar的布局文件ID
+     *
+     * @return
+     */
+    public static int getTitleBarLayoutId() {
+        if (!isInitialized()) {
+            return R.layout.default_title_bar_layout;
+        }
+        return netConfig.getTitleBarLayoutId();
     }
 }

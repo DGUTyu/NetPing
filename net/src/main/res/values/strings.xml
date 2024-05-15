@@ -29,4 +29,5 @@
     <string name="string_app_version">App版本号</string>
     <string name="string_app_install_time">App安装时间</string>
     <string name="string_app_recent_update_time">App最近更新时间</string>
+    <string name="string_network_check">网络检测</string>
 </resources>

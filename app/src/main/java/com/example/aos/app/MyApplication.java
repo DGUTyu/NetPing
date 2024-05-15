@@ -7,6 +7,7 @@ import com.example.net.util.CommonUtils;
 import com.example.net.config.NetConfig;
 import com.example.net.config.NetConfigUtils;
 import com.example.netping.BuildConfig;
+import com.example.netping.R;
 
 public class MyApplication extends Application {
     private Context context;
@@ -41,6 +42,15 @@ public class MyApplication extends Application {
                 return CommonUtils.getAppDigest(context);
             }
 
+//            @Override
+//            public int getTitleBarLayoutId() {
+//                //默认TitleBarLayout
+//                //return super.getTitleBarLayoutId();
+//                //取消TitleBarLayout
+//                //return NetConfig.NOT_LAYOUT_ID;
+//                //自定义TitleBarLayout
+//                //return R.layout.title_bar_layout;
+//            }
         });
     }
 }
