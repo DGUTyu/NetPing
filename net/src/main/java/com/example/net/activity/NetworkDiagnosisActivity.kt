@@ -8,9 +8,9 @@ import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.text.TextUtils
-import com.example.net.BuildConfig
 import com.example.net.R
 import com.example.net.adapter.NetworkDiagnosisAdapter
+import com.example.net.config.NetConfig
 import com.example.net.config.NetConfigUtils
 import com.example.net.entity.NetworkDiagnosisEntity
 import com.example.net.entity.PingEntity
@@ -451,21 +451,44 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
     }
 
 
-    private fun strDevice() = "${getString(R.string.string_device_brand)}: ${
-        Build.BRAND
-    }\n${getString(R.string.string_device_model)}: ${
-        Build.MODEL
-    }\n${getString(R.string.string_device_system)}: ${
-        androidVersion()
-    }\n${getString(R.string.string_rom_system_type)}: ${
-        CustomOSUtils.getCustomOS(Build.BRAND)
-    }\n${getString(R.string.string_rom_system_version)}: ${
-        CustomOSUtils.getCustomOSVersion(Build.BRAND)
-    }\n${getString(R.string.string_current_time)}: ${
-        SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())
-    }\n${getString(R.string.string_app_version)}: ${
-        BuildConfig.VERSION_NAME
-    }\nAppHash: ${AppHelper.getUUID()}"
+    private fun strDevice(): String {
+        val appInstallTimeString = getConfigInfoString(NetConfigUtils.getAppInstallTime(), R.string.string_app_install_time)
+        val appUpdateTimeString = getConfigInfoString(NetConfigUtils.getAppUpdateTime(), R.string.string_app_recent_update_time)
+        val versionString = getConfigInfoString(NetConfigUtils.getAppVersion(), R.string.string_app_version)
+        val appMD5String = getConfigInfoString(NetConfigUtils.getAppMd5(), "AppMD5")
+        val appSHA1String = getConfigInfoString(NetConfigUtils.getAppSHA1(), "SHA1")
+        val appSHA256String = getConfigInfoString(NetConfigUtils.getAppSHA256(), "SHA256")
+
+
+        return "${getString(R.string.string_device_brand)}: ${Build.BRAND}\n" +
+                "${getString(R.string.string_device_model)}: ${Build.MODEL}\n" +
+                "${getString(R.string.string_device_system)}: ${androidVersion()}\n" +
+                "${getString(R.string.string_rom_system_type)}: ${CustomOSUtils.getCustomOS(Build.BRAND)}\n" +
+                "${getString(R.string.string_rom_system_version)}: ${CustomOSUtils.getCustomOSVersion(Build.BRAND)}\n" +
+                "${getString(R.string.string_current_time)}: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())}" +
+                appInstallTimeString +
+                appUpdateTimeString +
+                versionString +
+                appMD5String +
+                appSHA1String +
+                appSHA256String
+    }
+
+    private fun getConfigInfoString(value: String?, stringResourceId: Int): String {
+        return if (value != NetConfig.NOT_SET) {
+            "\n${getString(stringResourceId)}: $value"
+        } else {
+            ""
+        }
+    }
+
+    private fun getConfigInfoString(value: String?, key: String): String {
+        return if (value != NetConfig.NOT_SET) {
+            "\n$key: $value"
+        } else {
+            ""
+        }
+    }
 
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

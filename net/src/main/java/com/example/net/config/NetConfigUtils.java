@@ -49,4 +49,75 @@ public class NetConfigUtils {
         return netConfig.getDefaultPingUrl();
     }
 
+    /**
+     * 获取接入方 APP 的安装时间
+     *
+     * @return
+     */
+    public static String getAppInstallTime() {
+        if (!isInitialized()) {
+            return NetConfig.NOT_SET;
+        }
+        return netConfig.getAppInstallTime();
+    }
+
+    /**
+     * 获取接入方 APP 的最近更新时间
+     *
+     * @return
+     */
+    public static String getAppUpdateTime() {
+        if (!isInitialized()) {
+            return NetConfig.NOT_SET;
+        }
+        return netConfig.getAppUpdateTime();
+    }
+
+    /**
+     * 获取接入方 APP 的版本号
+     *
+     * @return
+     */
+    public static String getAppVersion() {
+        if (!isInitialized()) {
+            return NetConfig.NOT_SET;
+        }
+        return netConfig.getAppVersion();
+    }
+
+    /**
+     * 获取接入方 APP 的 MD5
+     *
+     * @return
+     */
+    public static String getAppMd5() {
+        if (!isInitialized()) {
+            return NetConfig.NOT_SET;
+        }
+        return netConfig.getAppMd5();
+    }
+
+    /**
+     * 获取接入方 APP 的 SHA1
+     *
+     * @return
+     */
+    public static String getAppSHA1() {
+        if (!isInitialized()) {
+            return NetConfig.NOT_SET;
+        }
+        return netConfig.getAppSHA1();
+    }
+
+    /**
+     * 获取接入方 APP 的 SHA256
+     *
+     * @return
+     */
+    public static String getAppSHA256() {
+        if (!isInitialized()) {
+            return NetConfig.NOT_SET;
+        }
+        return netConfig.getAppSHA256();
+    }
 }
