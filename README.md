@@ -1,5 +1,5 @@
 # NetPing 网络自检
-# Network self-check 2.2 (compatible with support:appcompat-v7:27)
+# Network self-check 2.3 (compatible with support:appcompat-v7:27)
 ## Development environment
 ### Using Gradle plugin version 3.5.0 and above.
 ```groovy
@@ -28,7 +28,7 @@ dependencyResolutionManagement {
 ## 2.Add the dependency
 ```groovy
 dependencies {
-    implementation 'com.github.DGUTyu:NetPing:2.2'
+    implementation 'com.github.DGUTyu:NetPing:2.3'
 }
 ```
 ## 3.Use Demo
