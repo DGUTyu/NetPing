@@ -51,42 +51,6 @@ public class NetConfigUtils {
     }
 
     /**
-     * 获取接入方 APP 的安装时间和最近更新时间
-     *
-     * @return
-     */
-    public static String[] getAppTimeInfo() {
-        if (!isInitialized()) {
-            return new String[]{NetConfig.NOT_SET, NetConfig.NOT_SET};
-        }
-        return netConfig.getAppTimeInfo();
-    }
-
-    /**
-     * 获取接入方 APP 的 MD5、SHA-1 和 SHA-256
-     *
-     * @return
-     */
-    public static String[] getAppDigest() {
-        if (!isInitialized()) {
-            return new String[]{NetConfig.NOT_SET, NetConfig.NOT_SET, NetConfig.NOT_SET};
-        }
-        return netConfig.getAppDigest();
-    }
-
-    /**
-     * 获取接入方 APP 的版本号
-     *
-     * @return
-     */
-    public static String getAppVersion() {
-        if (!isInitialized()) {
-            return NetConfig.NOT_SET;
-        }
-        return netConfig.getAppVersion();
-    }
-
-    /**
      * 获取顶部titleBar的布局文件ID
      *
      * @return

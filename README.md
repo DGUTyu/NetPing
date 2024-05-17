@@ -1,5 +1,5 @@
 # NetPing 网络自检
-# Network self-check 2.3 (compatible with support:appcompat-v7:27)
+# Network self-check 2.4 (compatible with support:appcompat-v7:27)
 ## Development environment
 ### Using Gradle plugin version 3.5.0 and above.
 ```groovy
@@ -28,7 +28,7 @@ dependencyResolutionManagement {
 ## 2.Add the dependency
 ```groovy
 dependencies {
-    implementation 'com.github.DGUTyu:NetPing:2.3'
+    implementation 'com.github.DGUTyu:NetPing:2.4'
 }
 ```
 ## 3.Use Demo
@@ -53,29 +53,6 @@ public class MyApplication extends Application {
         });
     }
 }
-```
-If the application information is passed, it will be displayed on the Device.
-```java
-    NetConfigUtils.init(new NetConfig() {
-
-        @Override
-        public String getAppVersion() {
-            return BuildConfig.VERSION_NAME;
-        }
-
-        @Override
-        public String[] getAppTimeInfo() {
-            //You can use custom methods or use the methods I provide, as follows.
-            return CommonUtils.getAppTimeInfo(context);
-        }
-
-        @Override
-        public String[] getAppDigest() {
-            //You can use custom methods or use the methods I provide, as follows.
-            return CommonUtils.getAppDigest(context);
-        }
-
-    });
 ```
 You can also customize the title bar.Clicking the title bar will exit the current page.
 ```java

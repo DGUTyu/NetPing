@@ -25,23 +25,6 @@ public class MyApplication extends Application {
                 return BuildConfig.H5_BASE_URL;
             }
 
-            @Override
-            public String getAppVersion() {
-                return BuildConfig.VERSION_NAME;
-            }
-
-            @Override
-            public String[] getAppTimeInfo() {
-                //你可以使用自定义方法，也可以使用我提供的方法，如下
-                return CommonUtils.getAppTimeInfo(context);
-            }
-
-            @Override
-            public String[] getAppDigest() {
-                //你可以使用自定义方法，也可以使用我提供的方法，如下
-                return CommonUtils.getAppDigest(context);
-            }
-
 //            @Override
 //            public int getTitleBarLayoutId() {
 //                //默认TitleBarLayout

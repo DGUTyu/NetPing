@@ -174,4 +174,61 @@ public class CommonUtils {
         cm.setPrimaryClip(mClipData);
     }
 
+
+    /**
+     * 获取当前应用程序的版本名称
+     *
+     * @param context 调用此方法的Activity的上下文
+     * @return 应用程序的版本名称，如果未找到则返回"Unknown"
+     */
+    public static String getAppVersionName(Context context) {
+        try {
+            // 获取包管理器以检索包信息
+            PackageManager pm = context.getPackageManager();
+            // 获取当前应用程序包的包信息
+            PackageInfo packageInfo = pm.getPackageInfo(context.getPackageName(), 0);
+            // 从包信息中返回版本名称
+            return packageInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            // 如果未找到包名，则打印堆栈跟踪
+            e.printStackTrace();
+            // 返回"Unknown"表示未找到版本名称
+            return "Unknown";
+        }
+    }
+
+
+    /**
+     * 获取当前应用程序的版本代码
+     *
+     * @param context 调用此方法的Activity的上下文
+     * @return 应用程序的版本代码，如果未找到则返回-1
+     */
+    public static int getAppVersionCode(Context context) {
+        try {
+            // 获取包管理器以检索包信息
+            PackageManager pm = context.getPackageManager();
+            // 获取当前应用程序包的包信息
+            PackageInfo packageInfo = pm.getPackageInfo(context.getPackageName(), 0);
+            // 从包信息中返回版本代码
+            return packageInfo.versionCode;
+        } catch (PackageManager.NameNotFoundException e) {
+            // 如果未找到包名，则打印堆栈跟踪
+            e.printStackTrace();
+            // 返回-1表示未找到版本代码
+            return -1;
+        }
+    }
+
+    /**
+     * 获取当前应用程序的版本代码字符串格式
+     *
+     * @param context 调用此方法的Activity的上下文
+     * @return 应用程序的版本代码字符串格式，如果未找到则返回"Unknown"
+     */
+    public static String getAppVersionCodeStr(Context context) {
+        int versionCode = getAppVersionCode(context);
+        return versionCode != -1 ? String.valueOf(versionCode) : "Unknown";
+    }
+
 }

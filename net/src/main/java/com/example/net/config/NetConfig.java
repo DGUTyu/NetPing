@@ -14,18 +14,6 @@ public abstract class NetConfig {
         return BuildConfig.BASE_URL;
     }
 
-    public String getAppVersion() {
-        return NOT_SET;
-    }
-
-    public String[] getAppTimeInfo() {
-        return new String[]{NOT_SET, NOT_SET};
-    }
-
-    public String[] getAppDigest() {
-        return new String[]{NOT_SET, NOT_SET, NOT_SET};
-    }
-
     public int getTitleBarLayoutId() {
         return R.layout.default_title_bar_layout;
     }

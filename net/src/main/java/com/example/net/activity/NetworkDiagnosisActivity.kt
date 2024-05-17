@@ -484,11 +484,12 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
 
     private fun strDevice(): String {
-        val appTimeInfo = NetConfigUtils.getAppTimeInfo()
-        val appDigest = NetConfigUtils.getAppDigest()
+        val appTimeInfo = CommonUtils.getAppTimeInfo(context);
+        val appDigest = CommonUtils.getAppDigest(context);
         val appInstallTimeString = getConfigInfoString(appTimeInfo[0], R.string.string_app_install_time)
         val appUpdateTimeString = getConfigInfoString(appTimeInfo[1], R.string.string_app_recent_update_time)
-        val versionString = getConfigInfoString(NetConfigUtils.getAppVersion(), R.string.string_app_version)
+        val versionNameString = getConfigInfoString(CommonUtils.getAppVersionName(context), R.string.string_app_version)
+        val versionCodeString = getConfigInfoString(CommonUtils.getAppVersionCodeStr(context), R.string.string_app_version_code)
         val appMD5String = getConfigInfoString(appDigest[0], "AppMD5")
         val appSHA1String = getConfigInfoString(appDigest[1], "SHA1")
         val appSHA256String = getConfigInfoString(appDigest[2], "SHA256")
@@ -502,7 +503,8 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                 "${getString(R.string.string_current_time)}: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Date())}" +
                 appInstallTimeString +
                 appUpdateTimeString +
-                versionString +
+                versionNameString +
+                versionCodeString +
                 appMD5String +
                 appSHA1String +
                 appSHA256String
