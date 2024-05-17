@@ -33,7 +33,7 @@
                 app:layout_constraintEnd_toStartOf="@+id/id_img_arrow"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                tools:text="https://www.baidu.com" />
+                tools:text="Write your domain name here" />
 
 
             <ImageView
@@ -69,7 +69,7 @@
                 android:textSize="13sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/id_view_line"
-                tools:text="    DNS解析\n    https://www.baidu.com\n    192.168.3.218" />
+                tools:text="    DNS解析\n    Write your domain name here\n    11.22.33.44" />
 
 
         </android.support.constraint.ConstraintLayout>

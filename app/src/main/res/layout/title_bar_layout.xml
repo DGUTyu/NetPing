@@ -3,13 +3,24 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/white"
-    android:gravity="center"
     android:orientation="horizontal">
 
-    <TextView
+    <ImageView
+        android:id="@+id/iv_back"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
         android:padding="5dp"
+        android:src="@drawable/img_top_back" />
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:gravity="right"
+        android:padding="5dp"
+        android:paddingRight="10dp"
         android:text="@string/app_name"
         android:textColor="@color/black"
         android:textSize="18sp" />

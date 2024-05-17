@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">NetPing</string>
+    <string name="string_domain_error">域名错误</string>
+    <string name="string_default_title_bar">默认标题栏</string>
+    <string name="string_custom_title_bar">自定义标题栏</string>
+    <string name="string_no_title_bar">无标题栏</string>
 </resources>

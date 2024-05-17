@@ -16,8 +16,7 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import com.example.net.R
 import com.example.net.adapter.NetworkDiagnosisAdapter
-import com.example.net.config.NetConfig
-import com.example.net.config.NetConfigUtils
+import com.example.net.config.StartUpBean
 import com.example.net.entity.NetworkDiagnosisEntity
 import com.example.net.entity.PingEntity
 import com.example.net.interfaces.OnNetworkDiagnosisItemClickListener
@@ -36,11 +35,6 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 
-/**
- * @author lizheng.zhao
- * @date 20230421
- * @description 体验一下协程的魅力
- */
 class NetworkDiagnosisActivity : AppCompatActivity() {
     private var context: Context? = null
     private var deviceInfo: String = ""
@@ -51,7 +45,8 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
     private lateinit var mAdapter: NetworkDiagnosisAdapter
     private val mList = ArrayList<NetworkDiagnosisEntity>()
 
-    private var DOMAIN: String = NetConfigUtils.getDefaultPingUrl()
+    private var DOMAIN: String = ""
+    private lateinit var startUpBean: StartUpBean
 
 
     private val mSeqList = ArrayList<Int>()
@@ -77,20 +72,33 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
         const val REFRESH = "refresh"
         const val INTENT_FLAG = "URL"
-        val config = NetConfigUtils.getDefaultPingUrl()
-
-        fun startNetworkDiagnosisActivity(fromActivity: Activity?) {
-            startNetworkDiagnosisActivity(fromActivity, config)
-        }
-
+        const val START_BEAN = "StartUpBean"
 
         fun startNetworkDiagnosisActivity(fromActivity: Activity?, url: String?) {
+            val bean = StartUpBean()
+            startNetworkDiagnosisActivity(fromActivity, url, bean)
+        }
+
+        /**
+         * 启动网络诊断活动
+         *
+         * @param fromActivity 启动活动的上下文
+         * @param url 要诊断的URL
+         */
+        fun startNetworkDiagnosisActivity(fromActivity: Activity?, url: String?, bean: StartUpBean?) {
             fromActivity?.run {
-                val intent = Intent(this, NetworkDiagnosisActivity::class.java).apply {
-                    // 使用传递的 URL，如果为空，则使用默认的域名
-                    putExtra(INTENT_FLAG, if (url.isNullOrEmpty() || url == "null") config else url)
+                if (url.isNullOrEmpty() || url == "null") {
+                    // 如果URL为空或者为"null"，则提示输入正确的域名
+                    Toast.makeText(this, getString(R.string.string_enter_valid_domain), Toast.LENGTH_SHORT).show()
+                } else {
+                    // 创建意图并传递URL
+                    val intent = Intent(this, NetworkDiagnosisActivity::class.java).apply {
+                        putExtra(INTENT_FLAG, url)
+                        putExtra(START_BEAN, bean)
+                    }
+                    // 启动网络诊断活动
+                    startActivity(intent)
                 }
-                startActivity(intent)
             }
         }
     }
@@ -102,16 +110,23 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
         // 隐藏原生标题栏
         supportActionBar?.hide()
         setContentView(getLayoutId())
+        // 获取传递过来的startUpBean对象
+        startUpBean = intent.getSerializableExtra(START_BEAN) as? StartUpBean ?: StartUpBean()
         // 如果需要添加自定义的 titleBarLayout，则加载它
-        val customTitleBarLayoutId = NetConfigUtils.getTitleBarLayoutId()
-        if (customTitleBarLayoutId != NetConfig.NOT_LAYOUT_ID) {
+        val customTitleBarLayoutId = startUpBean.titleBarLayoutId
+        if (customTitleBarLayoutId != StartUpBean.NOT_LAYOUT_ID) {
             val customTitleBarLayout = LayoutInflater.from(this).inflate(customTitleBarLayoutId, null)
             // 将自定义的 titleBarLayout 添加到布局中
             val rootView = findViewById<LinearLayout>(R.id.root_layout)
             val layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             // 添加在第一个位置
             rootView.addView(customTitleBarLayout, 0, layoutParams)
-            initListener(customTitleBarLayout)
+            val backView = customTitleBarLayout.findViewById<View>(startUpBean.backId)
+            // 设置点击事件，如果 backView 为空则设置 customTitleBarLayout 的点击事件，否则设置 backView 的点击事件
+            (backView ?: customTitleBarLayout).setOnClickListener {
+                // 处理点击事件，finish当前页面
+                finish()
+            }
         }
         // Retrieve URL from intent extras
         val url = intent.getStringExtra(INTENT_FLAG) ?: DOMAIN
@@ -119,14 +134,6 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
         DOMAIN = url
         initView()
     }
-
-    private fun initListener(customTitleBarLayout: View?) {
-        customTitleBarLayout?.setOnClickListener {
-            // 处理点击事件，finish当前页面
-            finish()
-        }
-    }
-
 
     val initView = {
         initRecyclerView()
@@ -150,7 +157,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                 OnNetworkDiagnosisItemClickListener {
             override fun onItemClick(position: Int) {
                 if (position == POSITION_PING) {
-                    PingActivity.startPingActivity(this@NetworkDiagnosisActivity, DOMAIN, mIp)
+                    PingActivity.startPingActivity(this@NetworkDiagnosisActivity, DOMAIN, mIp, startUpBean)
                 } else if (position == POSITION_DEVICE) {
                     Toast.makeText(context, getString(R.string.string_copied), Toast.LENGTH_SHORT).show()
                     CommonUtils.copy(deviceInfo, context)
@@ -490,6 +497,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
         val appUpdateTimeString = getConfigInfoString(appTimeInfo[1], R.string.string_app_recent_update_time)
         val versionNameString = getConfigInfoString(CommonUtils.getAppVersionName(context), R.string.string_app_version)
         val versionCodeString = getConfigInfoString(CommonUtils.getAppVersionCodeStr(context), R.string.string_app_version_code)
+        val uuidString = getConfigInfoString(AppHelper.getUUID(), "AppHash")
         val appMD5String = getConfigInfoString(appDigest[0], "AppMD5")
         val appSHA1String = getConfigInfoString(appDigest[1], "SHA1")
         val appSHA256String = getConfigInfoString(appDigest[2], "SHA256")
@@ -505,24 +513,25 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                 appUpdateTimeString +
                 versionNameString +
                 versionCodeString +
+                uuidString +
                 appMD5String +
                 appSHA1String +
                 appSHA256String
     }
 
     private fun getConfigInfoString(value: String?, stringResourceId: Int): String {
-        return if (value != NetConfig.NOT_SET) {
-            "\n${getString(stringResourceId)}: $value"
-        } else {
+        return if (value.isNullOrEmpty() || value == "null") {
             ""
+        } else {
+            "\n${getString(stringResourceId)}: $value"
         }
     }
 
     private fun getConfigInfoString(value: String?, key: String): String {
-        return if (value != NetConfig.NOT_SET) {
-            "\n$key: $value"
-        } else {
+        return if (value.isNullOrEmpty() || value == "null") {
             ""
+        } else {
+            "\n$key: $value"
         }
     }
 

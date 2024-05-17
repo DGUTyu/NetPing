@@ -1,5 +1,5 @@
 # NetPing 网络自检
-# Network self-check 2.4 (compatible with support:appcompat-v7:27)
+# Network self-check 2.5 (compatible with support:appcompat-v7:27)
 ## Development environment
 ### Using Gradle plugin version 3.5.0 and above.
 ```groovy
@@ -28,44 +28,16 @@ dependencyResolutionManagement {
 ## 2.Add the dependency
 ```groovy
 dependencies {
-    implementation 'com.github.DGUTyu:NetPing:2.4'
+    implementation 'com.github.DGUTyu:NetPing:2.5'
 }
 ```
 ## 3.Use Demo
 ```java
-NetworkDiagnosisActivity.Companion.startNetworkDiagnosisActivity(LoginActivity.this);
-NetworkDiagnosisActivity.Companion.startNetworkDiagnosisActivity(LoginActivity.this, "https://www.baidu.com/");
+NetworkDiagnosisActivity.Companion.startNetworkDiagnosisActivity(YourActivity.this, "https://www.baidu.com");
 ```
-## 4.Custom NetPing default domain name (Optional)
+## 4.You can also customize the title bar.Clicking the title bar will exit the current page.(Optional)
 ```java
-public class MyApplication extends Application {
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        //Customize the default domain for NetPing.
-        NetConfigUtils.init(new NetConfig() {
-            @Override
-            public String getDefaultPingUrl() {
-                //return super.getDefaultPingUrl();
-                //return "https://www.baidu.com";
-                return BuildConfig.H5_BASE_URL;
-            }
-        });
-    }
-}
-```
-You can also customize the title bar.Clicking the title bar will exit the current page.
-```java
-    NetConfigUtils.init(new NetConfig() {
-
-        @Override
-        public int getTitleBarLayoutId() {
-            //default TitleBarLayout
-            //return super.getTitleBarLayoutId();
-            //cancel TitleBarLayout
-            //return NetConfig.NOT_LAYOUT_ID;
-            //custom TitleBarLayout
-            return R.layout.title_bar_layout;
-        }
-    });
+StartUpBean bean = new StartUpBean(R.layout.title_bar_layout, R.id.iv_back);
+//bean.setNoTitleBar();
+NetworkDiagnosisActivity.Companion.startNetworkDiagnosisActivity(YourActivity.this, "https://www.baidu.com", bean);
 ```

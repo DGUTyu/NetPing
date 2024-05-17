@@ -73,7 +73,6 @@ android {
             buildConfigField "boolean", "LOG_DEBUG", "true"
             buildConfigField "String", "LOG_TAG", "\"NetPing\""
             buildConfigField "String", "SP_NAME", "\"NetPing\""
-            buildConfigField 'String', 'H5_BASE_URL', '"https://www.baidu.com"'
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             //签名
@@ -87,7 +86,6 @@ android {
             buildConfigField "boolean", "LOG_DEBUG", "false"
             buildConfigField "String", "LOG_TAG", "\"NetPing\""
             buildConfigField "String", "SP_NAME", "\"NetPing\""
-            buildConfigField 'String', 'H5_BASE_URL', '"https://www.baidu.com"'
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             //签名

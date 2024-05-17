@@ -12,8 +12,8 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.example.net.R
-import com.example.net.config.NetConfig
-import com.example.net.config.NetConfigUtils
+import com.example.net.activity.NetworkDiagnosisActivity.Companion.START_BEAN
+import com.example.net.config.StartUpBean
 import com.example.net.entity.PingEntity
 import com.example.net.util.KotlinUtils
 import java.io.BufferedReader
@@ -35,6 +35,7 @@ class PingActivity : AppCompatActivity() {
 
     private var mDomain = ""
     private var mIp = ""
+    private lateinit var startUpBean: StartUpBean
 
     private var mIsPingFinish = false
 
@@ -56,12 +57,14 @@ class PingActivity : AppCompatActivity() {
         fun startPingActivity(
                 fromActivity: Activity?,
                 domain: String? = "",
-                ip: String? = ""
+                ip: String? = "",
+                startUpBean: StartUpBean
         ) {
             fromActivity?.run {
                 val intent = Intent(fromActivity, PingActivity::class.java)
                 intent.putExtra(DATA_DOMAIN, domain)
                 intent.putExtra(DATA_IP, ip)
+                intent.putExtra(START_BEAN, startUpBean)
                 startActivityForResult(intent, REQUEST_CODE)
             }
         }
@@ -81,16 +84,23 @@ class PingActivity : AppCompatActivity() {
         // 隐藏原生标题栏
         supportActionBar?.hide()
         setContentView(getLayoutId())
+        // 获取传递过来的startUpBean对象
+        startUpBean = intent.getSerializableExtra(START_BEAN) as? StartUpBean ?: StartUpBean()
         // 如果需要添加自定义的 titleBarLayout，则加载它
-        val customTitleBarLayoutId = NetConfigUtils.getTitleBarLayoutId()
-        if (customTitleBarLayoutId != NetConfig.NOT_LAYOUT_ID) {
+        val customTitleBarLayoutId = startUpBean.titleBarLayoutId
+        if (customTitleBarLayoutId != StartUpBean.NOT_LAYOUT_ID) {
             val customTitleBarLayout = LayoutInflater.from(this).inflate(customTitleBarLayoutId, null)
             // 将自定义的 titleBarLayout 添加到布局中
             val rootView = findViewById<LinearLayout>(R.id.root_layout)
             val layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             // 添加在第一个位置
             rootView.addView(customTitleBarLayout, 0, layoutParams)
-            initListener(customTitleBarLayout)
+            val backView = customTitleBarLayout.findViewById<View>(startUpBean.backId)
+            // 设置点击事件，如果 backView 为空则设置 customTitleBarLayout 的点击事件，否则设置 backView 的点击事件
+            (backView ?: customTitleBarLayout).setOnClickListener {
+                // 处理点击事件，finish当前页面
+                finish()
+            }
         }
         intent?.run {
             getStringExtra(DATA_DOMAIN)?.let(::setDomain)
@@ -100,14 +110,6 @@ class PingActivity : AppCompatActivity() {
             initView()
         }
     }
-
-    private fun initListener(customTitleBarLayout: View?) {
-        customTitleBarLayout?.setOnClickListener {
-            // 处理点击事件，finish当前页面
-            finish()
-        }
-    }
-
 
     private fun initView() {
         mTvDomain = R.id.id_tv_domain.getView()
