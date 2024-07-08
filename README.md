@@ -28,7 +28,7 @@ dependencyResolutionManagement {
 ## 2.Add the dependency
 ```groovy
 dependencies {
-    implementation 'com.github.DGUTyu:NetPing:2.5'
+    implementation 'com.github.DGUTyu:NetPing:3.0'
 }
 ```
 ## 3.Use Demo
