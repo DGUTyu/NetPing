@@ -5,9 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
@@ -40,6 +40,8 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
     private var deviceInfo: String = ""
     private fun getLayoutId() = R.layout.act_network_diagnosis
 
+    private val activityJob = SupervisorJob()
+    private val activityScope = CoroutineScope(Dispatchers.Main + activityJob)
 
     private lateinit var mRecyclerView: RecyclerView
     private lateinit var mAdapter: NetworkDiagnosisAdapter
@@ -201,7 +203,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
         //Dispatchers.IO	        子线程, 适合执行磁盘或网络 I/O操作
         //launch是异步，不会阻塞主线程
         //async是同步，会阻塞主线程
-        CoroutineScope(Dispatchers.IO).launch {
+        activityScope.launch(Dispatchers.IO) {
             mList[POSITION_DNS].content = strDns(getDeferredResult(::analysisDns))
             ping()
             //主线程中才可修改UI
@@ -216,22 +218,27 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
         thread {
             mSeqList.clear()
             mUuReentrantLock.lock()
-            mReceiveCnt = 0
-            val command = "ping -c 10 $mIp"
-            val process = Runtime.getRuntime().exec(command)
-            val input = BufferedReader(InputStreamReader(process.inputStream))
-            var line: String?
-            val pingOutput = StringBuilder()
-            while (input.readLine().also { line = it } != null) {
-                pingOutput.append("$line\n".formatPingMsg())
-            }
+            try {
+                mReceiveCnt = 0
+                val command = "ping -c 10 $mIp"
+                val process = Runtime.getRuntime().exec(command)
+                val input = BufferedReader(InputStreamReader(process.inputStream))
+                var line: String?
+                while (input.readLine().also { line = it } != null) {
+                    // 仅解析并更新 mPingData；勿 append Unit 到 StringBuilder
+                    "$line\n".formatPingMsg()
+                }
 
-            val exitCode = process.waitFor()
-            if (exitCode != 0) {
-                mPingData.notReachable(mIp)
-                updatePingUi(true)
+                val exitCode = process.waitFor()
+                if (exitCode != 0) {
+                    mPingData.notReachable(mIp)
+                    updatePingUi(true)
+                }
+            } finally {
+                if (mUuReentrantLock.isHeldByCurrentThread) {
+                    mUuReentrantLock.unlock()
+                }
             }
-            mUuReentrantLock.unlock()
         }
     }
 
@@ -255,8 +262,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                     //64 bytes from 119.29.126.90: icmp_seq=1 ttl=52 time=7.96 ms
                     val icmpSeqEntity = KotlinUtils.analysisIcmp(this)
                     icmpSeqEntity?.run {
-                        if (mSeqList.contains(seq.toInt())) {
-                        } else {
+                        if (!mSeqList.contains(seq.toInt())) {
                             mSeqList.add(seq.toInt())
                             mPingData.sendPackage = "${seq}/10"
                             mPingData.receivePackage = "${++mReceiveCnt}/10"
@@ -294,8 +300,6 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                 }
             }
         } catch (e: Exception) {
-            val map: MutableMap<String, String> = HashMap()
-            map["message"] = e.message.toString()
             mPingData.error()
             updatePingUi(true)
         }
@@ -327,11 +331,9 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
      * 获取deferred
      */
     private suspend fun <T> getDeferredResult(susFun: suspend () -> T): T {
-        //Dispatchers.IO	        子线程, 适合执行磁盘或网络 I/O操作
-        val deferred = CoroutineScope(Dispatchers.IO).async {
+        return withContext(Dispatchers.IO) {
             susFun()
         }
-        return deferred.await()
     }
 
 
@@ -535,5 +537,10 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        activityJob.cancel()
+        super.onDestroy()
     }
 }

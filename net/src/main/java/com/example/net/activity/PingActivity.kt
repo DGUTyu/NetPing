@@ -3,7 +3,7 @@ package com.example.net.activity
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.text.TextUtils
 import android.text.method.ScrollingMovementMethod
 import android.view.LayoutInflater
@@ -143,24 +143,29 @@ class PingActivity : AppCompatActivity() {
         thread {
             mSeqList.clear()
             mUuReentrantLock.lock()
-            val command = "ping -c 10 $mIp"
-            val process = Runtime.getRuntime().exec(command)
-            val input = BufferedReader(InputStreamReader(process.inputStream))
-            var line: String?
-            val pingOutput = StringBuilder()
-            while (input.readLine().also { line = it } != null) {
-                pingOutput.append("$line\n".formatPingMsg())
-                runOnUiThread {
-                    mTvPing.text = pingOutput.toString()
+            try {
+                val command = "ping -c 10 $mIp"
+                val process = Runtime.getRuntime().exec(command)
+                val input = BufferedReader(InputStreamReader(process.inputStream))
+                var line: String?
+                val pingOutput = StringBuilder()
+                while (input.readLine().also { line = it } != null) {
+                    pingOutput.append("$line\n".formatPingMsg())
+                    runOnUiThread {
+                        mTvPing.text = pingOutput.toString()
+                    }
                 }
-            }
 
-            val exitCode = process.waitFor()
-            if (exitCode != 0) {
-                mPingData.notReachable(mIp)
-                mUuReentrantLock.unlock()
-                runOnUiThread {
-                    mTvPing.text = "$mIp is not reachable"
+                val exitCode = process.waitFor()
+                if (exitCode != 0) {
+                    mPingData.notReachable(mIp)
+                    runOnUiThread {
+                        mTvPing.text = "$mIp is not reachable"
+                    }
+                }
+            } finally {
+                if (mUuReentrantLock.isHeldByCurrentThread) {
+                    mUuReentrantLock.unlock()
                 }
             }
         }
@@ -198,7 +203,6 @@ class PingActivity : AppCompatActivity() {
                 } else if (this.contains("max")) {
                     //rtt min/avg/max/mdev = 7.441/13.580/31.051/6.413 ms
                     mIsPingFinish = true
-                    mUuReentrantLock.unlock()
                     val statisticsAvgEntity = KotlinUtils.analysisStatisticsAvg(this)
                     statisticsAvgEntity?.run {
                         mPingData.minRtt = min
@@ -213,7 +217,6 @@ class PingActivity : AppCompatActivity() {
                 e,
                 SentryUtils.getClassNameAndMethodName()
             )*/
-            mUuReentrantLock.unlock()
             mPingData.error()
         }
         return this

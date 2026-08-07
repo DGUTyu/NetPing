@@ -23,7 +23,7 @@ android {
             buildConfigField "String", "LOG_TAG", "\"NetPing\""
             buildConfigField "String", "SP_NAME", "\"NetPing\""
             //其他设置
-            setting.each { k, v ->
+            rootProject.ext.setting.each { k, v ->
                 buildConfigField("String", k, v)
             }
         }
@@ -34,7 +34,7 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             //其他设置
-            setting.each { k, v ->
+            rootProject.ext.setting.each { k, v ->
                 buildConfigField("String", k, v)
             }
         }

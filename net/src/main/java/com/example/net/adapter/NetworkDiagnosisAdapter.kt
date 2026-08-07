@@ -33,7 +33,7 @@ class NetworkDiagnosisAdapter(
             payloads: MutableList<Any>
     ) {
         super.onBindViewHolder(holder, position, payloads)
-        if (payloads != null && payloads.size > 0) {
+        if (payloads.isNotEmpty()) {
             holder.run {
                 setText(R.id.id_tv_content, mList[position].content)
             }
