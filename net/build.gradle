@@ -1,6 +1,5 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'maven-publish'
 
 android {
     compileSdkVersion rootProject.ext.android["compileSdkVersion"]
@@ -60,18 +59,4 @@ dependencies {
     implementation rootProject.ext.dependencies["core-ktx"]
     implementation rootProject.ext.dependencies["BaseRecyclerViewAdapterHelper"]
     implementation rootProject.ext.dependencies["gson"]
-}
-
-// JitPack: publishToMavenLocal（AGP 3.5 无 components.release，直接发布 AAR）
-afterEvaluate {
-    publishing {
-        publications {
-            release(MavenPublication) {
-                groupId = project.findProperty('group') ?: 'com.github.DGUTyu'
-                artifactId = 'NetPing'
-                version = project.findProperty('version') ?: rootProject.ext.android["versionName"]
-                artifact(bundleReleaseAar)
-            }
-        }
-    }
 }
