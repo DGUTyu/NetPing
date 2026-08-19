@@ -11,6 +11,8 @@ import com.example.net.R
 import com.example.net.activity.NetworkDiagnosisActivity.Companion.START_BEAN
 import com.example.net.config.StartUpBean
 import com.example.net.entity.PingEntity
+import android.util.Log
+import com.example.net.util.AutoSizeGuard
 import com.example.net.util.KotlinUtils
 import com.example.net.util.PingProcess
 import com.example.net.util.TitleBarBinder
@@ -44,11 +46,14 @@ class PingActivity : AppCompatActivity() {
     private var destroyed = false
 
     companion object {
+        private const val TAG = "NetPing.PingActivity"
         const val DATA_DOMAIN = "DOMAIN"
         const val DATA_IP = "IP"
         const val REQUEST_CODE = 1001
         const val RESULT_CODE = 1002
         const val RESULT_DATA = "result_data"
+        /** 无自定义标题时由 Ping 页使用库内默认标题，避免 Intent 脏 resourceId */
+        const val EXTRA_USE_DEFAULT_TITLE = "USE_DEFAULT_TITLE"
 
         fun startPingActivity(
             fromActivity: Activity?,
@@ -60,7 +65,15 @@ class PingActivity : AppCompatActivity() {
                 val intent = Intent(fromActivity, PingActivity::class.java)
                 intent.putExtra(DATA_DOMAIN, domain)
                 intent.putExtra(DATA_IP, ip)
-                intent.putExtra(START_BEAN, startUpBean)
+                // 库内默认标题：目标页 attachDefault，避免 Intent 携带脏 layoutId/-1
+                val customTitle = startUpBean.hasTitleBar()
+                        && startUpBean.titleBarLayoutId != R.layout.default_title_bar_layout
+                if (customTitle) {
+                    intent.putExtra(EXTRA_USE_DEFAULT_TITLE, false)
+                    intent.putExtra(START_BEAN, startUpBean)
+                } else {
+                    intent.putExtra(EXTRA_USE_DEFAULT_TITLE, true)
+                }
                 startActivityForResult(intent, REQUEST_CODE)
             }
         }
@@ -75,17 +88,31 @@ class PingActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.i(TAG, "onCreate begin")
         // 强制不透明主题，避免继承宿主透明 Theme 导致首帧黑屏
         setTheme(R.style.NetPing_Activity)
+        AutoSizeGuard.cancelAdapt(this)
         super.onCreate(savedInstanceState)
         destroyed = false
         // 隐藏原生标题栏
         supportActionBar?.hide()
         setContentView(getLayoutId())
-        // 获取传递过来的startUpBean对象
-        startUpBean = intent.getSerializableExtra(START_BEAN) as? StartUpBean ?: StartUpBean()
-        // 如果需要添加自定义的 titleBarLayout，则加载它（细节见 TitleBarBinder）
-        TitleBarBinder.attach(this, startUpBean, R.id.root_layout)
+        Log.i(TAG, "onCreate setContentView done")
+        // 标题栏：优先库内默认，避免反序列化 resourceId=-1 触发 0xffffffff 风暴
+        val useDefaultTitle = intent.getBooleanExtra(EXTRA_USE_DEFAULT_TITLE, true)
+        if (useDefaultTitle) {
+            TitleBarBinder.attachDefault(this, R.id.root_layout)
+        } else {
+            startUpBean = intent.getSerializableExtra(START_BEAN) as? StartUpBean ?: StartUpBean()
+            if (startUpBean.hasTitleBar()) {
+                TitleBarBinder.attach(this, startUpBean, R.id.root_layout)
+            } else {
+                TitleBarBinder.attachDefault(this, R.id.root_layout)
+            }
+        }
+        if (!::startUpBean.isInitialized) {
+            startUpBean = StartUpBean()
+        }
         intent?.run {
             getStringExtra(DATA_DOMAIN)?.let(::setDomain)
             getStringExtra(DATA_IP)?.let(::setIp)
@@ -93,6 +120,7 @@ class PingActivity : AppCompatActivity() {
         if (!TextUtils.isEmpty(mDomain)) {
             initView()
         }
+        Log.i(TAG, "onCreate end domain=$mDomain ip=$mIp")
     }
 
     private fun initView() {

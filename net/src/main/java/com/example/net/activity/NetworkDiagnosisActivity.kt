@@ -18,6 +18,7 @@ import com.example.net.entity.PingEntity
 import com.example.net.interfaces.OnNetworkDiagnosisItemClickListener
 import com.example.net.util.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.cancelChildren
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.URI
@@ -55,6 +56,9 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
     // Ping 列表项 UI 节流时间戳，避免每行结果都 notify 造成布局风暴
     @Volatile
     private var lastPingUiMs = 0L
+    // 正要跳转 Ping 详情时停止一切诊断刷新
+    @Volatile
+    private var leavingToPing = false
 
 
     companion object {
@@ -100,15 +104,22 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // 强制不透明主题，避免继承宿主透明 Theme 导致首帧黑屏
         setTheme(R.style.NetPing_Activity)
+        Logger.d("NetPing.Diagnosis", "onCreate begin")
+        AutoSizeGuard.cancelAdapt(this)
         super.onCreate(savedInstanceState)
         context = this
-        // 隐藏原生标题栏
         supportActionBar?.hide()
         setContentView(getLayoutId())
         // 获取传递过来的startUpBean对象
         startUpBean = intent.getSerializableExtra(START_BEAN) as? StartUpBean ?: StartUpBean()
-        // 如果需要添加自定义的 titleBarLayout，则加载它（细节见 TitleBarBinder）
-        TitleBarBinder.attach(this, startUpBean, R.id.root_layout)
+        // 标题栏：非法/默认 layoutId 走库内默认，杜绝 0xffffffff
+        if (startUpBean.hasTitleBar()
+            && startUpBean.titleBarLayoutId != R.layout.default_title_bar_layout
+        ) {
+            TitleBarBinder.attach(this, startUpBean, R.id.root_layout)
+        } else if (startUpBean.hasTitleBar()) {
+            TitleBarBinder.attachDefault(this, R.id.root_layout)
+        }
         // Retrieve URL from intent extras
         val url = intent.getStringExtra(INTENT_FLAG) ?: DOMAIN
         // Assign URL to DOMAIN variable
@@ -143,8 +154,8 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
             OnNetworkDiagnosisItemClickListener {
             override fun onItemClick(position: Int) {
                 if (position == POSITION_PING) {
-                    // 进入详情页前先停掉诊断页 ping，避免双进程
-                    pingProcess.stop()
+                    // 进入详情页前停 ping、取消诊断协程刷新，避免 pause 时主线程仍刷列表
+                    prepareLeaveToPing()
                     PingActivity.startPingActivity(this@NetworkDiagnosisActivity, DOMAIN, mIp, startUpBean)
                 } else if (position == POSITION_DEVICE) {
                     Toast.makeText(context, getString(R.string.string_copied), Toast.LENGTH_SHORT).show()
@@ -155,13 +166,22 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
     }
 
 
+    private fun prepareLeaveToPing() {
+        leavingToPing = true
+        pingProcess.stop()
+        activityJob.cancelChildren()
+    }
+
     private fun refresh() {
+        if (leavingToPing || isFinishing) {
+            return
+        }
         // Net / Device / DNS 均在 IO；主线程合并刷新，避免逐项 notify 风暴
         activityScope.launch(Dispatchers.IO) {
             val net = strNet()
             val device = strDevice()
             withContext(Dispatchers.Main) {
-                if (isFinishing || mList.size <= POSITION_DEVICE) {
+                if (leavingToPing || isFinishing || mList.size <= POSITION_DEVICE) {
                     return@withContext
                 }
                 mList[POSITION_NET].content = net
@@ -171,7 +191,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
             }
             val dns = strDns(getDeferredResult(::analysisDns))
             withContext(Dispatchers.Main) {
-                if (isFinishing || mList.size <= POSITION_DNS) {
+                if (leavingToPing || isFinishing || mList.size <= POSITION_DNS) {
                     return@withContext
                 }
                 mList[POSITION_DNS].content = dns
@@ -179,7 +199,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
             }
             // 首帧与 DNS UI 落地后再自动 ping，降低进页即 ANR 概率
             delay(400)
-            if (!isActive || isFinishing) {
+            if (!isActive || leavingToPing || isFinishing) {
                 return@launch
             }
             ping()
@@ -269,6 +289,9 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
 
     private fun updatePingUi(isNeedUploadSentry: Boolean = false) {
+        if (leavingToPing || isFinishing) {
+            return
+        }
         mList[POSITION_PING].content = mPingData.display()
         // 非最终结果时节流刷新，减轻 AutoSize/RecyclerView 主线程压力
         val now = System.currentTimeMillis()
@@ -277,7 +300,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
         }
         lastPingUiMs = now
         runOnUiThread {
-            if (isFinishing) {
+            if (leavingToPing || isFinishing) {
                 return@runOnUiThread
             }
             if (isNeedUploadSentry) {

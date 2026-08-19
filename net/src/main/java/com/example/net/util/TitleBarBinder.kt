@@ -1,43 +1,97 @@
 package com.example.net.util
 
 import android.app.Activity
+import android.content.res.Resources
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import com.example.net.R
 import com.example.net.config.StartUpBean
 
 /**
  * 将 StartUpBean 指定的自定义 titleBar 挂到诊断/Ping 页 root 顶部。
+ * 严禁对非法 resourceId（含 -1 / 0xffffffff）执行 inflate / findViewById。
  */
 object TitleBarBinder {
 
+    private const val TAG = "NetPing.TitleBar"
+
     fun attach(activity: Activity, startUpBean: StartUpBean, rootLayoutId: Int) {
         val layoutId = startUpBean.titleBarLayoutId
-        // 未配置 titleBar，或非法 layoutId 时跳过
-        if (layoutId == StartUpBean.NOT_LAYOUT_ID || layoutId <= 0) {
+        // 未配置 titleBar，或非法 layoutId 时跳过（含 NOT_LAYOUT_ID=-1）
+        if (!isValidResId(layoutId)) {
             return
         }
-        // 将自定义的 titleBarLayout 添加到布局中
-        val customTitleBarLayout = LayoutInflater.from(activity).inflate(layoutId, null)
+        if (!canResolveRes(activity, layoutId)) {
+            Log.w(TAG, "skip titleBar, unresolved layoutId=$layoutId, fallback default")
+            attachDefault(activity, rootLayoutId)
+            return
+        }
+        val customTitleBarLayout = try {
+            LayoutInflater.from(activity).inflate(layoutId, null)
+        } catch (e: Exception) {
+            Log.w(TAG, "inflate titleBar failed layoutId=$layoutId", e)
+            attachDefault(activity, rootLayoutId)
+            return
+        }
         val rootView = activity.findViewById<LinearLayout>(rootLayoutId) ?: return
         val layoutParams = ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
-        // 添加在第一个位置
         rootView.addView(customTitleBarLayout, 0, layoutParams)
-        // backId <= 0 时不 findViewById(-1)，避免 No package ID ff / 0xffffffff
-        val backId = startUpBean.backId
-        val backView = if (backId > 0) {
-            customTitleBarLayout.findViewById<View>(backId)
+        bindBackClick(activity, customTitleBarLayout, startUpBean.backId)
+    }
+
+    /**
+     * 始终使用库内默认标题栏（库 R），避免 Intent 反序列化后的脏 resourceId。
+     */
+    fun attachDefault(activity: Activity, rootLayoutId: Int) {
+        val rootView = activity.findViewById<LinearLayout>(rootLayoutId) ?: return
+        val customTitleBarLayout = try {
+            LayoutInflater.from(activity).inflate(R.layout.default_title_bar_layout, null)
+        } catch (e: Exception) {
+            Log.w(TAG, "inflate default titleBar failed", e)
+            return
+        }
+        val layoutParams = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        rootView.addView(customTitleBarLayout, 0, layoutParams)
+        bindBackClick(activity, customTitleBarLayout, R.id.iv_titleBarLayout_back)
+    }
+
+    private fun bindBackClick(activity: Activity, titleBar: View, backId: Int) {
+        val backView = if (isValidResId(backId)) {
+            try {
+                titleBar.findViewById<View>(backId)
+            } catch (e: Exception) {
+                null
+            }
         } else {
             null
         }
-        // 设置点击事件，如果 backView 为空则设置 customTitleBarLayout 的点击事件，否则设置 backView 的点击事件
-        (backView ?: customTitleBarLayout).setOnClickListener {
-            // 处理点击事件，finish当前页面
+        (backView ?: titleBar).setOnClickListener {
             activity.finish()
+        }
+    }
+
+    /** 合法 Android 资源 ID：正数且含包 ID；排除 0 / -1 */
+    fun isValidResId(resId: Int): Boolean {
+        return resId > 0 && (resId ushr 24) != 0
+    }
+
+    private fun canResolveRes(activity: Activity, resId: Int): Boolean {
+        return try {
+            activity.resources.getResourceName(resId)
+            true
+        } catch (e: Resources.NotFoundException) {
+            false
+        } catch (e: Exception) {
+            false
         }
     }
 }
