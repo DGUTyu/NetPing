@@ -24,8 +24,8 @@ class PingProcess {
         const val COUNT = 10
         /** ping 总截止秒数（-w），比单包 -W 更跨 busybox/toybox 兼容 */
         const val DEADLINE_SECONDS = 20
-        /** 主线程刷新节流间隔 */
-        const val UI_THROTTLE_MS = 200L
+        /** 主线程刷新节流间隔（联迪宿主上过密 setText 易 ANR） */
+        const val UI_THROTTLE_MS = 500L
         private const val WATCHDOG_EXTRA_MS = 2000L
         private const val EXIT_WAIT_MS = 1500L
 
@@ -93,11 +93,15 @@ class PingProcess {
         try {
             val input = BufferedReader(InputStreamReader(started.inputStream))
             var line: String? = null
-            while (!stopped.get() && input.readLine().also { line = it } != null) {
-                val text = line
-                if (text != null) {
-                    onLine(text)
+            try {
+                while (!stopped.get() && input.readLine().also { line = it } != null) {
+                    val text = line
+                    if (text != null) {
+                        onLine(text)
+                    }
                 }
+            } catch (ignored: Exception) {
+                // stop()/destroy 关闭流时 readLine 可能抛 IOException，视为正常结束
             }
             // 有界等待 exit，避免 destroy 后 waitFor 永久挂起
             return waitForExit(started)

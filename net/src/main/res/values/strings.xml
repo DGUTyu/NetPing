@@ -33,4 +33,6 @@
     <string name="string_network_check">网络检测</string>
     <string name="string_copied">已复制</string>
     <string name="string_enter_valid_domain">请输入正确的域名</string>
+    <string name="string_ping_preparing">准备 Ping…</string>
+    <string name="string_ping_running">Ping 进行中…</string>
 </resources>

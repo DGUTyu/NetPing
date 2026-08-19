@@ -39,6 +39,9 @@ class PingActivity : AppCompatActivity() {
     // UI 节流时间戳，避免每行 ping 输出都跑主线程 setText
     @Volatile
     private var lastUiMs = 0L
+    // 避免 onDestroy 后仍往主线程 post
+    @Volatile
+    private var destroyed = false
 
     companion object {
         const val DATA_DOMAIN = "DOMAIN"
@@ -75,6 +78,7 @@ class PingActivity : AppCompatActivity() {
         // 强制不透明主题，避免继承宿主透明 Theme 导致首帧黑屏
         setTheme(R.style.NetPing_Activity)
         super.onCreate(savedInstanceState)
+        destroyed = false
         // 隐藏原生标题栏
         supportActionBar?.hide()
         setContentView(getLayoutId())
@@ -101,19 +105,28 @@ class PingActivity : AppCompatActivity() {
 
         mTvDomain.text = "${getString(R.string.string_domain)}: $mDomain"
         mTvDNS.text = strDns()
+        // 先进页可交互，再开 ping，避免宿主进程进页即 ANR
+        mTvPing.text = getString(R.string.string_ping_preparing)
 
         refresh()
     }
 
     private fun refresh() {
-        if (!TextUtils.isEmpty(mIp)) {
-            //域名解析成功才可ping；等首帧后再起，减轻进页 ANR
-            mTvPing.text = ""
+        if (TextUtils.isEmpty(mIp)) {
+            return
+        }
+        // 双帧后再稍延后起 ping：优先保证可点击返回，再测速
+        mTvPing.post {
+            if (destroyed || isFinishing) {
+                return@post
+            }
             mTvPing.postDelayed({
-                if (!isFinishing) {
-                    ping()
+                if (destroyed || isFinishing) {
+                    return@postDelayed
                 }
-            }, 300L)
+                mTvPing.text = getString(R.string.string_ping_running)
+                ping()
+            }, 200L)
         }
     }
 
@@ -123,15 +136,21 @@ class PingActivity : AppCompatActivity() {
             pingOutput.setLength(0)
             lastUiMs = 0L
             val exitCode = pingProcess.run(mIp) { line ->
+                if (destroyed) {
+                    return@run
+                }
                 pingOutput.append("$line\n".formatPingMsg())
                 flushPingUi(false)
+            }
+            if (destroyed) {
+                return@thread
             }
             // 收尾强制刷一次完整输出
             flushPingUi(true)
             if (exitCode != 0 && pingOutput.isEmpty()) {
                 mPingData.notReachable(mIp)
                 runOnUiThread {
-                    if (!isFinishing) {
+                    if (!destroyed && !isFinishing) {
                         mTvPing.text = "$mIp is not reachable"
                     }
                 }
@@ -143,6 +162,9 @@ class PingActivity : AppCompatActivity() {
      * 将 ping 输出刷到 TextView；非 force 时按 [PingProcess.UI_THROTTLE_MS] 节流。
      */
     private fun flushPingUi(force: Boolean) {
+        if (destroyed) {
+            return
+        }
         val now = System.currentTimeMillis()
         if (!force && now - lastUiMs < PingProcess.UI_THROTTLE_MS) {
             return
@@ -150,7 +172,7 @@ class PingActivity : AppCompatActivity() {
         lastUiMs = now
         val text = pingOutput.toString()
         runOnUiThread {
-            if (!isFinishing) {
+            if (!destroyed && !isFinishing) {
                 mTvPing.text = text
             }
         }
@@ -197,10 +219,6 @@ class PingActivity : AppCompatActivity() {
                 }
             }
         } catch (e: Exception) {
-            /*SentryUtils.uploadTryCatchException(
-                e,
-                SentryUtils.getClassNameAndMethodName()
-            )*/
             mPingData.error()
         }
         return this
@@ -216,6 +234,7 @@ class PingActivity : AppCompatActivity() {
     fun Int.getView(): TextView = findViewById<TextView>(this)
 
     override fun onDestroy() {
+        destroyed = true
         // 离开页面必须停掉 ping，避免原生进程残留
         pingProcess.stop()
         super.onDestroy()
