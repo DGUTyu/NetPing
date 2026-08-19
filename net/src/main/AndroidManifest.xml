@@ -8,11 +8,13 @@
     <application>
         <activity
             android:name=".activity.PingActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false"
-            android:screenOrientation="portrait" />
+            android:theme="@style/NetPing.Activity" />
         <activity
             android:name=".activity.NetworkDiagnosisActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="false"
-            android:screenOrientation="portrait" />
+            android:theme="@style/NetPing.Activity" />
     </application>
 </manifest>

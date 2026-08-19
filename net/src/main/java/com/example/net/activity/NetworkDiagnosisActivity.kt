@@ -5,15 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.text.TextUtils
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import android.text.TextUtils
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.Toast
 import com.example.net.R
 import com.example.net.adapter.NetworkDiagnosisAdapter
 import com.example.net.config.StartUpBean
@@ -22,14 +18,11 @@ import com.example.net.entity.PingEntity
 import com.example.net.interfaces.OnNetworkDiagnosisItemClickListener
 import com.example.net.util.*
 import kotlinx.coroutines.*
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.thread
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -50,20 +43,18 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
     private var DOMAIN: String = ""
     private lateinit var startUpBean: StartUpBean
 
-
     private val mSeqList = ArrayList<Int>()
-
-    //不可重入锁
-    private val mUuReentrantLock by lazy {
-        ReentrantLock(false)
-    }
 
     private var mIp = ""
 
     private var mReceiveCnt = 0
 
-
     private val mPingData = PingEntity()
+    // 用 PingProcess.stop/run 替代原 ReentrantLock，避免诊断页与 PingActivity 双开 ping
+    private val pingProcess = PingProcess()
+    // Ping 列表项 UI 节流时间戳，避免每行结果都 notify 造成布局风暴
+    @Volatile
+    private var lastPingUiMs = 0L
 
 
     companion object {
@@ -114,22 +105,8 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
         setContentView(getLayoutId())
         // 获取传递过来的startUpBean对象
         startUpBean = intent.getSerializableExtra(START_BEAN) as? StartUpBean ?: StartUpBean()
-        // 如果需要添加自定义的 titleBarLayout，则加载它
-        val customTitleBarLayoutId = startUpBean.titleBarLayoutId
-        if (customTitleBarLayoutId != StartUpBean.NOT_LAYOUT_ID) {
-            val customTitleBarLayout = LayoutInflater.from(this).inflate(customTitleBarLayoutId, null)
-            // 将自定义的 titleBarLayout 添加到布局中
-            val rootView = findViewById<LinearLayout>(R.id.root_layout)
-            val layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            // 添加在第一个位置
-            rootView.addView(customTitleBarLayout, 0, layoutParams)
-            val backView = customTitleBarLayout.findViewById<View>(startUpBean.backId)
-            // 设置点击事件，如果 backView 为空则设置 customTitleBarLayout 的点击事件，否则设置 backView 的点击事件
-            (backView ?: customTitleBarLayout).setOnClickListener {
-                // 处理点击事件，finish当前页面
-                finish()
-            }
-        }
+        // 如果需要添加自定义的 titleBarLayout，则加载它（细节见 TitleBarBinder）
+        TitleBarBinder.attach(this, startUpBean, R.id.root_layout)
         // Retrieve URL from intent extras
         val url = intent.getStringExtra(INTENT_FLAG) ?: DOMAIN
         // Assign URL to DOMAIN variable
@@ -156,9 +133,11 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
         mAdapter.notifyDataSetChanged()
 
         mAdapter.setOnNetworkDiagnosisItemClickListener(object :
-                OnNetworkDiagnosisItemClickListener {
+            OnNetworkDiagnosisItemClickListener {
             override fun onItemClick(position: Int) {
                 if (position == POSITION_PING) {
+                    // 进入详情页前先停掉诊断页 ping，避免双进程
+                    pingProcess.stop()
                     PingActivity.startPingActivity(this@NetworkDiagnosisActivity, DOMAIN, mIp, startUpBean)
                 } else if (position == POSITION_DEVICE) {
                     Toast.makeText(context, getString(R.string.string_copied), Toast.LENGTH_SHORT).show()
@@ -171,26 +150,22 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
     private fun refresh() {
         refreshDns()
-        refreshNet()
-        refreshDevice()
-    }
-
-
-    /**
-     * 刷新设备信息
-     */
-    private val refreshDevice = {
-        mList[POSITION_DEVICE].content = strDevice()
-        mAdapter.notifyItemChanged(POSITION_DEVICE, REFRESH)
-    }
-
-
-    /**
-     * 刷新网络网络状态
-     */
-    private val refreshNet = {
-        mList[POSITION_NET].content = strNet()
-        mAdapter.notifyItemChanged(POSITION_NET, REFRESH)
+        // Net / Device（含 VPN NetworkInterface 枚举）放到 IO，避免首帧卡主线程
+        activityScope.launch(Dispatchers.IO) {
+            val net = strNet()
+            val device = strDevice()
+            // 主线程中才可修改UI
+            withContext(Dispatchers.Main) {
+                if (isFinishing || mList.size <= POSITION_DEVICE) {
+                    return@withContext
+                }
+                mList[POSITION_NET].content = net
+                mList[POSITION_DEVICE].content = device
+                deviceInfo = device
+                mAdapter.notifyItemChanged(POSITION_NET, REFRESH)
+                mAdapter.notifyItemChanged(POSITION_DEVICE, REFRESH)
+            }
+        }
     }
 
 
@@ -204,52 +179,37 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
         //launch是异步，不会阻塞主线程
         //async是同步，会阻塞主线程
         activityScope.launch(Dispatchers.IO) {
-            mList[POSITION_DNS].content = strDns(getDeferredResult(::analysisDns))
+            val dns = strDns(getDeferredResult(::analysisDns))
             ping()
-            //主线程中才可修改UI
+            // 主线程中才可修改UI
             withContext(Dispatchers.Main) {
+                if (isFinishing || mList.size <= POSITION_DNS) {
+                    return@withContext
+                }
+                mList[POSITION_DNS].content = dns
                 mAdapter.notifyItemChanged(POSITION_DNS, REFRESH)
             }
         }
     }
 
 
-    private val pingThread = {
-        thread {
-            mSeqList.clear()
-            mUuReentrantLock.lock()
-            try {
-                mReceiveCnt = 0
-                val command = "ping -c 10 $mIp"
-                val process = Runtime.getRuntime().exec(command)
-                val input = BufferedReader(InputStreamReader(process.inputStream))
-                var line: String?
-                while (input.readLine().also { line = it } != null) {
-                    // 仅解析并更新 mPingData；勿 append Unit 到 StringBuilder
-                    "$line\n".formatPingMsg()
-                }
-
-                val exitCode = process.waitFor()
-                if (exitCode != 0) {
-                    mPingData.notReachable(mIp)
-                    updatePingUi(true)
-                }
-            } finally {
-                if (mUuReentrantLock.isHeldByCurrentThread) {
-                    mUuReentrantLock.unlock()
-                }
-            }
-        }
-    }
-
-    private val ping = {
+    private fun ping() {
         if (TextUtils.isEmpty(mIp)) {
             mPingData.dnsAnalysisFailed()
             updatePingUi(true)
-        } else {
-            if (!mUuReentrantLock.isLocked) {
-                // lock 对象当前可用，可以执行其他操作
-                pingThread()
+            return
+        }
+        // PingProcess 当前可用时再跑；stop/run 内部保证不会叠两个进程
+        thread {
+            mSeqList.clear()
+            mReceiveCnt = 0
+            val exitCode = pingProcess.run(mIp) { line ->
+                // 仅解析并更新 mPingData；勿 append Unit 到 StringBuilder
+                "$line\n".formatPingMsg()
+            }
+            if (exitCode != 0 && mReceiveCnt == 0) {
+                mPingData.notReachable(mIp)
+                updatePingUi(true)
             }
         }
     }
@@ -264,10 +224,10 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                     icmpSeqEntity?.run {
                         if (!mSeqList.contains(seq.toInt())) {
                             mSeqList.add(seq.toInt())
-                            mPingData.sendPackage = "${seq}/10"
-                            mPingData.receivePackage = "${++mReceiveCnt}/10"
+                            mPingData.sendPackage = "${seq}/${PingProcess.COUNT}"
+                            mPingData.receivePackage = "${++mReceiveCnt}/${PingProcess.COUNT}"
                             val receive =
-                                    "%.2f".format((seq.toFloat() - mReceiveCnt) / seq.toFloat() * 100)
+                                "%.2f".format((seq.toFloat() - mReceiveCnt) / seq.toFloat() * 100)
                             mPingData.lostRate = "${receive}%"
                             mPingData.minRtt = ""
                             mPingData.maxRtt = ""
@@ -281,7 +241,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                     statisticsEntity?.run {
                         mPingData.sendPackage = sent
                         mPingData.receivePackage = receive
-                        val lossRate = (10 - receive.toInt()) * 10f
+                        val lossRate = (PingProcess.COUNT - receive.toInt()) * (100f / PingProcess.COUNT)
                         val rate = String.format("%.2f", lossRate)
                         mPingData.lostRate = "${rate}%"
                     }
@@ -317,7 +277,16 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
     private fun updatePingUi(isNeedUploadSentry: Boolean = false) {
         mList[POSITION_PING].content = mPingData.display()
+        // 非最终结果时节流刷新，减轻 AutoSize/RecyclerView 主线程压力
+        val now = System.currentTimeMillis()
+        if (!isNeedUploadSentry && now - lastPingUiMs < PingProcess.UI_THROTTLE_MS) {
+            return
+        }
+        lastPingUiMs = now
         runOnUiThread {
+            if (isFinishing) {
+                return@runOnUiThread
+            }
             if (isNeedUploadSentry) {
                 val map: MutableMap<String, String> = HashMap()
                 map["MessageData"] = getSentryUploadData()
@@ -366,14 +335,14 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
         mList.add(NetworkDiagnosisEntity(DOMAIN, strDns()))
 
-        mList.add(NetworkDiagnosisEntity("Net", strNet()))
+        // Net / Device 先占位，真正内容在 IO 线程刷新，避免 onCreate 卡顿
+        val loading = getString(R.string.string_dns_resolving)
+        mList.add(NetworkDiagnosisEntity("Net", loading))
 
-        deviceInfo = strDevice()
-        mList.add(NetworkDiagnosisEntity("Device", deviceInfo))
-
+        deviceInfo = ""
+        mList.add(NetworkDiagnosisEntity("Device", loading))
 
         mList.add(NetworkDiagnosisEntity("Ping", mPingData.display(), true))
-
 
         return mList
     }
@@ -407,11 +376,11 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
 
     private fun strDns(dns: String = getString(R.string.string_dns_resolving)) =
-            "    ${getString(R.string.string_dns_resolution)}:\n    $DOMAIN\n    $dns"
+        "    ${getString(R.string.string_dns_resolution)}:\n    $DOMAIN\n    $dns"
 
     private fun strNet(): String {
         val netStatus =
-                if (NetworkUtils.isConnected(this)) getString(R.string.string_available) else getString(R.string.string_unavailable)
+            if (NetworkUtils.isConnected(this)) getString(R.string.string_available) else getString(R.string.string_unavailable)
         val netType = AppHelper.getNetState(this)
         val proxy = isUseProxy()
         val vpn = isUseVPN()
@@ -540,6 +509,8 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        // 离开页面必须停掉 ping，避免原生进程残留
+        pingProcess.stop()
         activityJob.cancel()
         super.onDestroy()
     }

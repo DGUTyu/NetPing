@@ -41,7 +41,7 @@
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:layout_marginEnd="10dp"
-                android:src="@drawable/icon_arrow_blue"
+                android:src="@drawable/ic_netping_arrow"
                 android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="@+id/id_tv_title"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -53,7 +53,7 @@
             <View
                 android:id="@+id/id_view_line"
                 android:layout_width="match_parent"
-                android:layout_height="0.5dp"
+                android:layout_height="1dp"
                 android:layout_marginTop="5dp"
                 android:background="@color/color_fra_shadow"
                 app:layout_constraintTop_toBottomOf="@+id/id_tv_title" />

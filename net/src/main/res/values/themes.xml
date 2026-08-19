@@ -1,12 +1,15 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 独立不透明主题：避免继承宿主 TranslucentTheme / windowDisablePreview，
+         也避免与宿主同名 AppTheme 撞车后变成透明窗 + portrait 导致 token 失效。 -->
+    <style name="NetPing.Activity" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="colorPrimary">@color/theme_color</item>
         <item name="colorPrimaryDark">@color/theme_color</item>
         <item name="colorAccent">@color/theme_color</item>
         <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowBackground">@color/transparent</item>
-        <!-- 透明主题 -->
-        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@color/color_fra_shadow</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowDisablePreview">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
     </style>
 </resources>

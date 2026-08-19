@@ -3,35 +3,28 @@ package com.example.net.activity
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import android.text.TextUtils
 import android.text.method.ScrollingMovementMethod
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import com.example.net.R
 import com.example.net.activity.NetworkDiagnosisActivity.Companion.START_BEAN
 import com.example.net.config.StartUpBean
 import com.example.net.entity.PingEntity
 import com.example.net.util.KotlinUtils
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.util.concurrent.locks.ReentrantLock
+import com.example.net.util.PingProcess
+import com.example.net.util.TitleBarBinder
 import kotlin.concurrent.thread
 
 class PingActivity : AppCompatActivity() {
 
     private fun getLayoutId() = R.layout.act_ping
 
-
     private lateinit var mTvDomain: TextView
     private lateinit var mTvDNS: TextView
     private lateinit var mTvPing: TextView
 
     private val mSeqList = ArrayList<Int>()
-
 
     private var mDomain = ""
     private var mIp = ""
@@ -40,12 +33,12 @@ class PingActivity : AppCompatActivity() {
     private var mIsPingFinish = false
 
     private val mPingData = PingEntity()
-
-    //不可重入锁
-    private val mUuReentrantLock by lazy {
-        ReentrantLock(false)
-    }
-
+    // 用 PingProcess.stop/run 替代原 ReentrantLock，避免与诊断页双开 ping
+    private val pingProcess = PingProcess()
+    private val pingOutput = StringBuilder()
+    // UI 节流时间戳，避免每行 ping 输出都跑主线程 setText
+    @Volatile
+    private var lastUiMs = 0L
 
     companion object {
         const val DATA_DOMAIN = "DOMAIN"
@@ -55,10 +48,10 @@ class PingActivity : AppCompatActivity() {
         const val RESULT_DATA = "result_data"
 
         fun startPingActivity(
-                fromActivity: Activity?,
-                domain: String? = "",
-                ip: String? = "",
-                startUpBean: StartUpBean
+            fromActivity: Activity?,
+            domain: String? = "",
+            ip: String? = "",
+            startUpBean: StartUpBean
         ) {
             fromActivity?.run {
                 val intent = Intent(fromActivity, PingActivity::class.java)
@@ -78,7 +71,6 @@ class PingActivity : AppCompatActivity() {
         mIp = ip
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // 隐藏原生标题栏
@@ -86,22 +78,8 @@ class PingActivity : AppCompatActivity() {
         setContentView(getLayoutId())
         // 获取传递过来的startUpBean对象
         startUpBean = intent.getSerializableExtra(START_BEAN) as? StartUpBean ?: StartUpBean()
-        // 如果需要添加自定义的 titleBarLayout，则加载它
-        val customTitleBarLayoutId = startUpBean.titleBarLayoutId
-        if (customTitleBarLayoutId != StartUpBean.NOT_LAYOUT_ID) {
-            val customTitleBarLayout = LayoutInflater.from(this).inflate(customTitleBarLayoutId, null)
-            // 将自定义的 titleBarLayout 添加到布局中
-            val rootView = findViewById<LinearLayout>(R.id.root_layout)
-            val layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            // 添加在第一个位置
-            rootView.addView(customTitleBarLayout, 0, layoutParams)
-            val backView = customTitleBarLayout.findViewById<View>(startUpBean.backId)
-            // 设置点击事件，如果 backView 为空则设置 customTitleBarLayout 的点击事件，否则设置 backView 的点击事件
-            (backView ?: customTitleBarLayout).setOnClickListener {
-                // 处理点击事件，finish当前页面
-                finish()
-            }
-        }
+        // 如果需要添加自定义的 titleBarLayout，则加载它（细节见 TitleBarBinder）
+        TitleBarBinder.attach(this, startUpBean, R.id.root_layout)
         intent?.run {
             getStringExtra(DATA_DOMAIN)?.let(::setDomain)
             getStringExtra(DATA_IP)?.let(::setIp)
@@ -119,58 +97,58 @@ class PingActivity : AppCompatActivity() {
         //文字内容可滚动
         mTvPing.movementMethod = ScrollingMovementMethod.getInstance()
 
-
         mTvDomain.text = "${getString(R.string.string_domain)}: $mDomain"
         mTvDNS.text = strDns()
-
 
         refresh()
     }
 
-
     private fun refresh() {
         if (!TextUtils.isEmpty(mIp)) {
             //域名解析成功才可ping
-            if (!mUuReentrantLock.isLocked) {
-                mTvPing.text = ""
-                ping()
-            }
+            mTvPing.text = ""
+            ping()
         }
     }
-
 
     private fun ping() {
         thread {
             mSeqList.clear()
-            mUuReentrantLock.lock()
-            try {
-                val command = "ping -c 10 $mIp"
-                val process = Runtime.getRuntime().exec(command)
-                val input = BufferedReader(InputStreamReader(process.inputStream))
-                var line: String?
-                val pingOutput = StringBuilder()
-                while (input.readLine().also { line = it } != null) {
-                    pingOutput.append("$line\n".formatPingMsg())
-                    runOnUiThread {
-                        mTvPing.text = pingOutput.toString()
-                    }
-                }
-
-                val exitCode = process.waitFor()
-                if (exitCode != 0) {
-                    mPingData.notReachable(mIp)
-                    runOnUiThread {
+            pingOutput.setLength(0)
+            lastUiMs = 0L
+            val exitCode = pingProcess.run(mIp) { line ->
+                pingOutput.append("$line\n".formatPingMsg())
+                flushPingUi(false)
+            }
+            // 收尾强制刷一次完整输出
+            flushPingUi(true)
+            if (exitCode != 0 && pingOutput.isEmpty()) {
+                mPingData.notReachable(mIp)
+                runOnUiThread {
+                    if (!isFinishing) {
                         mTvPing.text = "$mIp is not reachable"
                     }
-                }
-            } finally {
-                if (mUuReentrantLock.isHeldByCurrentThread) {
-                    mUuReentrantLock.unlock()
                 }
             }
         }
     }
 
+    /**
+     * 将 ping 输出刷到 TextView；非 force 时按 [PingProcess.UI_THROTTLE_MS] 节流。
+     */
+    private fun flushPingUi(force: Boolean) {
+        val now = System.currentTimeMillis()
+        if (!force && now - lastUiMs < PingProcess.UI_THROTTLE_MS) {
+            return
+        }
+        lastUiMs = now
+        val text = pingOutput.toString()
+        runOnUiThread {
+            if (!isFinishing) {
+                mTvPing.text = text
+            }
+        }
+    }
 
     private fun String.formatPingMsg(): String {
         try {
@@ -195,7 +173,7 @@ class PingActivity : AppCompatActivity() {
                     statisticsEntity?.run {
                         mPingData.sendPackage = sent
                         mPingData.receivePackage = receive
-                        val lossRate = (10 - receive.toInt()) * 10f
+                        val lossRate = (PingProcess.COUNT - receive.toInt()) * (100f / PingProcess.COUNT)
                         val rate = String.format("%.2f", lossRate)
                         mPingData.lostRate = "${rate}%"
                         return mPingData.displayRate()
@@ -222,14 +200,18 @@ class PingActivity : AppCompatActivity() {
         return this
     }
 
-
     private fun strDns() =
-            if (TextUtils.isEmpty(mIp)) "${getString(R.string.string_dns_resolution)}:\n$mDomain\n" else "${
-                getString(
-                        R.string.string_dns_resolution
-                )
-            }:\n$mDomain\n$mIp"
-
+        if (TextUtils.isEmpty(mIp)) "${getString(R.string.string_dns_resolution)}:\n$mDomain\n" else "${
+            getString(
+                R.string.string_dns_resolution
+            )
+        }:\n$mDomain\n$mIp"
 
     fun Int.getView(): TextView = findViewById<TextView>(this)
+
+    override fun onDestroy() {
+        // 离开页面必须停掉 ping，避免原生进程残留
+        pingProcess.stop()
+        super.onDestroy()
+    }
 }

@@ -9,8 +9,8 @@
         android:id="@+id/iv_titleBarLayout_back"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="@dimen/dp_10"
-        android:src="@drawable/img_top_back" />
+        android:padding="10dp"
+        android:src="@drawable/ic_netping_back" />
 
     <TextView
         android:id="@+id/tv"
