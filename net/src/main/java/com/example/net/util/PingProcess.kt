@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * 可销毁、带总截止时间的 ping。
- * 命令为 `ping -c 4 -w 8`，避免联迪 POS 上无限 readLine / 双开打满。
+ * 命令为 `ping -c 10 -w 20`，避免联迪 POS 上无限 readLine / 双开打满。
  * [run] 必须在后台线程调用；[stop] 可在任意线程调用。
  */
 class PingProcess {
@@ -20,10 +20,10 @@ class PingProcess {
     private val generation = AtomicInteger(0)
 
     companion object {
-        /** 发包次数（原为 10，缩短以降低 POS 卡顿） */
-        const val COUNT = 4
+        /** 发包次数 */
+        const val COUNT = 10
         /** ping 总截止秒数（-w），比单包 -W 更跨 busybox/toybox 兼容 */
-        const val DEADLINE_SECONDS = 8
+        const val DEADLINE_SECONDS = 20
         /** 主线程刷新节流间隔 */
         const val UI_THROTTLE_MS = 200L
         private const val WATCHDOG_EXTRA_MS = 2000L

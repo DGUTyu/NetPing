@@ -72,6 +72,8 @@ class PingActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 强制不透明主题，避免继承宿主透明 Theme 导致首帧黑屏
+        setTheme(R.style.NetPing_Activity)
         super.onCreate(savedInstanceState)
         // 隐藏原生标题栏
         supportActionBar?.hide()
@@ -105,9 +107,13 @@ class PingActivity : AppCompatActivity() {
 
     private fun refresh() {
         if (!TextUtils.isEmpty(mIp)) {
-            //域名解析成功才可ping
+            //域名解析成功才可ping；等首帧后再起，减轻进页 ANR
             mTvPing.text = ""
-            ping()
+            mTvPing.postDelayed({
+                if (!isFinishing) {
+                    ping()
+                }
+            }, 300L)
         }
     }
 

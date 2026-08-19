@@ -98,6 +98,8 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 强制不透明主题，避免继承宿主透明 Theme 导致首帧黑屏
+        setTheme(R.style.NetPing_Activity)
         super.onCreate(savedInstanceState)
         context = this
         // 隐藏原生标题栏
@@ -116,7 +118,12 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
     val initView = {
         initRecyclerView()
-        refresh()
+        // 等 RecyclerView 完成首次 layout 再开诊断，优先保证首帧可画
+        mRecyclerView.post {
+            if (!isFinishing) {
+                refresh()
+            }
+        }
     }
 
 
@@ -149,12 +156,10 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
 
 
     private fun refresh() {
-        refreshDns()
-        // Net / Device（含 VPN NetworkInterface 枚举）放到 IO，避免首帧卡主线程
+        // Net / Device / DNS 均在 IO；主线程合并刷新，避免逐项 notify 风暴
         activityScope.launch(Dispatchers.IO) {
             val net = strNet()
             val device = strDevice()
-            // 主线程中才可修改UI
             withContext(Dispatchers.Main) {
                 if (isFinishing || mList.size <= POSITION_DEVICE) {
                     return@withContext
@@ -162,26 +167,9 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                 mList[POSITION_NET].content = net
                 mList[POSITION_DEVICE].content = device
                 deviceInfo = device
-                mAdapter.notifyItemChanged(POSITION_NET, REFRESH)
-                mAdapter.notifyItemChanged(POSITION_DEVICE, REFRESH)
+                mAdapter.notifyItemRangeChanged(POSITION_NET, 2, REFRESH)
             }
-        }
-    }
-
-
-    /**
-     * 刷新dns
-     */
-    private val refreshDns = {
-        mList[POSITION_DNS].content = strDns()
-        mAdapter.notifyItemChanged(POSITION_DNS, REFRESH)
-        //Dispatchers.IO	        子线程, 适合执行磁盘或网络 I/O操作
-        //launch是异步，不会阻塞主线程
-        //async是同步，会阻塞主线程
-        activityScope.launch(Dispatchers.IO) {
             val dns = strDns(getDeferredResult(::analysisDns))
-            ping()
-            // 主线程中才可修改UI
             withContext(Dispatchers.Main) {
                 if (isFinishing || mList.size <= POSITION_DNS) {
                     return@withContext
@@ -189,9 +177,14 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                 mList[POSITION_DNS].content = dns
                 mAdapter.notifyItemChanged(POSITION_DNS, REFRESH)
             }
+            // 首帧与 DNS UI 落地后再自动 ping，降低进页即 ANR 概率
+            delay(400)
+            if (!isActive || isFinishing) {
+                return@launch
+            }
+            ping()
         }
     }
-
 
     private fun ping() {
         if (TextUtils.isEmpty(mIp)) {
