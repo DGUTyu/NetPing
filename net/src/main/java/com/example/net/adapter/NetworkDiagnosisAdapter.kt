@@ -27,20 +27,6 @@ class NetworkDiagnosisAdapter(
     }
 
 
-    override fun onBindViewHolder(
-            holder: BaseViewHolder,
-            position: Int,
-            payloads: MutableList<Any>
-    ) {
-        super.onBindViewHolder(holder, position, payloads)
-        if (payloads.isNotEmpty()) {
-            holder.run {
-                setText(R.id.id_tv_content, mList[position].content)
-            }
-        }
-    }
-
-
     override fun convert(helper: BaseViewHolder, item: NetworkDiagnosisEntity?) {
         helper.run {
             item?.run {

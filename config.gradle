@@ -10,8 +10,8 @@ ext {
             applicationId    : "com.example.netping",
             minSdkVersion    : 16,
             targetSdkVersion : 30,
-            versionCode      : 7,
-            versionName      : "4.6"
+            versionCode      : 10,
+            versionName      : "4.9"
     ]
     dependencies = [
             "appcompat"                    : 'androidx.appcompat:appcompat:1.1.0',

@@ -84,6 +84,27 @@ object TitleBarBinder {
         return resId > 0 && (resId ushr 24) != 0
     }
 
+    /**
+     * 宿主合并资源后，Intent 反序列化的 layoutId 数值可能与库内 R 不一致；
+     * 按 entry 名识别 default_title_bar_layout，仅在可解析且非默认标题时走自定义。
+     */
+    fun canUseCustomTitleBar(activity: Activity, startUpBean: StartUpBean): Boolean {
+        if (!startUpBean.hasTitleBar()) {
+            return false
+        }
+        val layoutId = startUpBean.titleBarLayoutId
+        if (!isValidResId(layoutId)) {
+            return false
+        }
+        return try {
+            val entryName = activity.resources.getResourceEntryName(layoutId)
+            val typeName = activity.resources.getResourceTypeName(layoutId)
+            typeName == "layout" && entryName != "default_title_bar_layout"
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     private fun canResolveRes(activity: Activity, resId: Int): Boolean {
         return try {
             activity.resources.getResourceName(resId)

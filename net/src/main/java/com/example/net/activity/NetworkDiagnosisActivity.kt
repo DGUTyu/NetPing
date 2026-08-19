@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.text.TextUtils
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.net.R
@@ -100,12 +101,14 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
         }
     }
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(ContextThemeWrapper(newBase, R.style.NetPing_Activity))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // 强制不透明主题，避免继承宿主透明 Theme 导致首帧黑屏
         setTheme(R.style.NetPing_Activity)
         Logger.d("NetPing.Diagnosis", "onCreate begin")
-        AutoSizeGuard.cancelAdapt(this)
         super.onCreate(savedInstanceState)
         context = this
         supportActionBar?.hide()
@@ -156,7 +159,18 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                 if (position == POSITION_PING) {
                     // 进入详情页前停 ping、取消诊断协程刷新，避免 pause 时主线程仍刷列表
                     prepareLeaveToPing()
-                    PingActivity.startPingActivity(this@NetworkDiagnosisActivity, DOMAIN, mIp, startUpBean)
+                    // 延后一帧再 start：让主线程先消化完 stop/cancel，避免与 Ping 创建抢主线程
+                    mRecyclerView.post {
+                        if (isFinishing) {
+                            return@post
+                        }
+                        PingActivity.startPingActivity(
+                            this@NetworkDiagnosisActivity,
+                            DOMAIN,
+                            mIp,
+                            startUpBean
+                        )
+                    }
                 } else if (position == POSITION_DEVICE) {
                     Toast.makeText(context, getString(R.string.string_copied), Toast.LENGTH_SHORT).show()
                     CommonUtils.copy(deviceInfo, context)
@@ -187,7 +201,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                 mList[POSITION_NET].content = net
                 mList[POSITION_DEVICE].content = device
                 deviceInfo = device
-                mAdapter.notifyItemRangeChanged(POSITION_NET, 2, REFRESH)
+                mAdapter.notifyItemRangeChanged(POSITION_NET, 2)
             }
             val dns = strDns(getDeferredResult(::analysisDns))
             withContext(Dispatchers.Main) {
@@ -195,7 +209,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                     return@withContext
                 }
                 mList[POSITION_DNS].content = dns
-                mAdapter.notifyItemChanged(POSITION_DNS, REFRESH)
+                mAdapter.notifyItemChanged(POSITION_DNS)
             }
             // 首帧与 DNS UI 落地后再自动 ping，降低进页即 ANR 概率
             delay(400)
@@ -293,7 +307,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
             return
         }
         mList[POSITION_PING].content = mPingData.display()
-        // 非最终结果时节流刷新，减轻 AutoSize/RecyclerView 主线程压力
+        // 非最终结果时节流刷新，减轻 RecyclerView 主线程压力
         val now = System.currentTimeMillis()
         if (!isNeedUploadSentry && now - lastPingUiMs < PingProcess.UI_THROTTLE_MS) {
             return
@@ -307,7 +321,7 @@ class NetworkDiagnosisActivity : AppCompatActivity() {
                 val map: MutableMap<String, String> = HashMap()
                 map["MessageData"] = getSentryUploadData()
             }
-            mAdapter.notifyItemChanged(POSITION_PING, REFRESH)
+            mAdapter.notifyItemChanged(POSITION_PING)
         }
     }
 

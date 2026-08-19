@@ -1,18 +1,19 @@
 package com.example.net.activity
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
 import android.text.method.ScrollingMovementMethod
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.view.ContextThemeWrapper
 import com.example.net.R
 import com.example.net.activity.NetworkDiagnosisActivity.Companion.START_BEAN
 import com.example.net.config.StartUpBean
 import com.example.net.entity.PingEntity
 import android.util.Log
-import com.example.net.util.AutoSizeGuard
 import com.example.net.util.KotlinUtils
 import com.example.net.util.PingProcess
 import com.example.net.util.TitleBarBinder
@@ -65,18 +66,16 @@ class PingActivity : AppCompatActivity() {
                 val intent = Intent(fromActivity, PingActivity::class.java)
                 intent.putExtra(DATA_DOMAIN, domain)
                 intent.putExtra(DATA_IP, ip)
-                // 库内默认标题：目标页 attachDefault，避免 Intent 携带脏 layoutId/-1
-                val customTitle = startUpBean.hasTitleBar()
-                        && startUpBean.titleBarLayoutId != R.layout.default_title_bar_layout
-                if (customTitle) {
-                    intent.putExtra(EXTRA_USE_DEFAULT_TITLE, false)
-                    intent.putExtra(START_BEAN, startUpBean)
-                } else {
-                    intent.putExtra(EXTRA_USE_DEFAULT_TITLE, true)
-                }
+                // Ping 详情页始终用库内默认标题，避免 StartUpBean 反序列化 layoutId 在宿主 R 中错位
+                intent.putExtra(EXTRA_USE_DEFAULT_TITLE, true)
                 startActivityForResult(intent, REQUEST_CODE)
             }
         }
+    }
+
+    override fun attachBaseContext(newBase: Context) {
+        // 在 onCreate 之前套上库内不透明主题，避免继承宿主 TranslucentTheme 导致创建阶段资源异常
+        super.attachBaseContext(ContextThemeWrapper(newBase, R.style.NetPing_Activity))
     }
 
     private fun setDomain(domain: String) {
@@ -89,9 +88,7 @@ class PingActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "onCreate begin")
-        // 强制不透明主题，避免继承宿主透明 Theme 导致首帧黑屏
         setTheme(R.style.NetPing_Activity)
-        AutoSizeGuard.cancelAdapt(this)
         super.onCreate(savedInstanceState)
         destroyed = false
         // 隐藏原生标题栏
